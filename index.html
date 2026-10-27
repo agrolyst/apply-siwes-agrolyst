@@ -392,7 +392,18 @@ form.addEventListener("submit",async event=>{
  try{
   const response=await fetch(PUBLIC_FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":PUBLIC_API_KEY},body:JSON.stringify({action:"submit",application,confirm_email:document.getElementById("confirm_email").checked,privacy_ack:document.getElementById("privacy_ack").checked,policy_accepted:policyAccepted,policy_version:POLICY_VERSION})});
   let result={};try{result=await response.json();}catch{}
-  if(!response.ok||!result.ok||!result.application?.reference_no){throw new Error(result.error||"We could not confirm the submission. Please try again.");}
+  if(!response.ok||!result.ok||!result.application?.reference_no){
+   if(response.status===409&&(result.field==="email"||result.field==="phone")){
+    const reason=result.error||"This contact detail has already been used for a SIWES application.";
+    goToStep(0);
+    const fieldInput=document.getElementById(result.field);
+    if(fieldInput){fieldInput.setCustomValidity(reason);fieldInput.focus();}
+    if(result.field==="phone"){phoneHint.textContent=reason;phoneHint.classList.add("phone-invalid");}
+    showMessage(reason,true);
+    return;
+   }
+   throw new Error(result.error||"We could not confirm the submission. Please try again.");
+  }
   const app=result.application;
   document.getElementById("application-id").textContent=app.reference_no;
   document.getElementById("application-status").textContent="Your application has been received and its current status is Under Review. Visit /check/status and enter this Application ID with the email you used to apply.";
