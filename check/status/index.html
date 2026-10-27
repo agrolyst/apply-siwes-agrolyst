@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123d2b">
+<meta name="description" content="Check the status of your Agrolyst SIWES application using your Application ID and email address.">
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png">
+<link rel="shortcut icon" type="image/png" href="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png">
+<title>Check Application Status | Agrolyst SIWES</title>
+<style>
+:root{color-scheme:light;--forest:#123d2b;--green:#1e6842;--lime:#d4e76a;--ink:#18281f;--muted:#68756b;--line:#dce5d9;--paper:#f4f7f0;--pale:#edf4e9;--red:#9d3430;--amber:#86621a}
+*{box-sizing:border-box}
+html{min-height:100%;scroll-behavior:smooth}
+body{margin:0;min-height:100vh;color:var(--ink);font:15px/1.6 "DM Sans",Inter,system-ui,sans-serif;background:radial-gradient(ellipse at 8% 12%,#e6efe0 0,transparent 26rem),radial-gradient(ellipse at 96% 89%,#e6eee1 0,transparent 28rem),var(--paper);-webkit-font-smoothing:antialiased}
+a{color:inherit}button,input{font:inherit}
+.shell{width:min(1100px,calc(100% - 32px));margin:auto}
+header{background:#ffffffdf;border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:76px}
+.brand{display:flex;align-items:center;gap:12px;color:var(--forest);text-decoration:none;font-size:14px;font-weight:900;letter-spacing:1px}
+.brand img{display:block;width:65px;height:48px;object-fit:contain}
+.brand small{display:block;margin-top:3px;color:var(--muted);font-size:8px;letter-spacing:1.35px}
+.nav-link{border:1px solid #dce8d7;background:#f1f6ee;color:var(--forest);border-radius:999px;padding:9px 14px;font-size:11px;font-weight:850;text-decoration:none}
+.hero{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(120deg,#0d3021,#185637 58%,#24734a);color:white;padding:55px 0 82px}
+.hero:after{content:"";position:absolute;z-index:-1;right:-145px;top:-255px;width:500px;height:500px;border:1px solid #ffffff20;transform:rotate(38deg);box-shadow:0 0 0 32px #ffffff04,0 0 0 66px #ffffff04}
+.kicker{display:flex;align-items:center;gap:9px;color:var(--lime);font-size:10px;letter-spacing:1.8px;font-weight:900;text-transform:uppercase}
+.dot{width:7px;height:7px;display:block;background:var(--lime);border-radius:50%;box-shadow:0 0 0 5px #d4e76a20}
+h1{max-width:720px;margin:13px 0 12px;font-size:clamp(33px,5vw,52px);line-height:1.06;letter-spacing:-1.9px}
+.hero p{max-width:680px;margin:0;color:#dcebe0;font-size:14px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:22px;align-items:start;margin-top:-29px;padding-bottom:62px;position:relative;z-index:1}
+.card{background:#fff;border:1px solid #dfe8dc;border-radius:17px;padding:clamp(20px,3vw,30px);box-shadow:0 18px 50px #123d2b0e}
+h2{margin:0 0 7px;font-size:22px;line-height:1.2;letter-spacing:-.6px;color:var(--forest)}
+.muted{margin:0 0 22px;color:var(--muted);font-size:12px}
+.field{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+label{font-size:11px;font-weight:850;color:#34483a}
+input{width:100%;min-height:48px;border:1px solid #ced9cb;border-radius:9px;background:#fbfdf9;padding:12px 13px;color:var(--ink);outline:none;transition:border .18s,box-shadow .18s}
+input:focus{border-color:var(--green);box-shadow:0 0 0 4px #1e684415;background:#fff}
+.help{font-size:10px;color:#7d897d;margin-top:-1px}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:12px 17px;border:0;border-radius:9px;background:linear-gradient(110deg,#155334,#1e6842);color:#fff;font-size:12px;font-weight:850;text-decoration:none;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.button:hover{transform:translateY(-1px);box-shadow:0 9px 20px #123d2b20}
+.button:disabled{opacity:.6;cursor:wait;transform:none;box-shadow:none}
+.button.secondary{background:#fff;border:1px solid var(--line);color:var(--forest)}
+.button.full{width:100%}
+.message{display:none;border-radius:9px;margin:14px 0;padding:12px 14px;font-size:12px;line-height:1.6;background:#eaf4e7;color:#194d2e;border:1px solid #d8e9d2}
+.message.show{display:block}.message.error{background:#fff0ed;color:#a12c1e;border-color:#f3d0c8}
+.result{margin-top:22px;border-top:1px solid #e8eee5;padding-top:22px}
+.result-top{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap}
+.reference-label{font-size:9px;font-weight:900;letter-spacing:1.4px;color:#849184;text-transform:uppercase}
+.reference{font-size:16px;font-weight:900;letter-spacing:.3px;overflow-wrap:anywhere;color:var(--forest);margin:5px 0}
+.badge{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:7px 11px;background:#fff1d5;border:1px solid #f0ddb0;color:#795516;font-size:10px;font-weight:900}
+.badge:before{content:"";width:6px;height:6px;border-radius:50%;background:#c69a35}
+.badge.green{background:#e8f4e4;color:#235d37;border-color:#d4e9cd}.badge.green:before{background:#4b9e5d}
+.badge.red{background:#fae9e6;color:#a0312c;border-color:#f0d3cf}.badge.red:before{background:#c34d45}
+.timeline{display:grid;gap:0;margin:20px 0 0}
+.stage{display:grid;grid-template-columns:25px minmax(0,1fr);gap:11px;position:relative;padding-bottom:20px}
+.stage:last-child{padding-bottom:0}
+.stage:not(:last-child):before{content:"";position:absolute;left:11px;top:24px;bottom:0;width:2px;background:#e3eae0}
+.stage-mark{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#eef2eb;border:1px solid #dce5d8;color:#8a9789;font-size:10px;font-weight:900}
+.stage.done .stage-mark{background:#1e6842;border-color:#1e6842;color:white}
+.stage.active .stage-mark{background:#fff3d9;border-color:#e3c773;color:#775814;box-shadow:0 0 0 4px #fbf4e3}
+.stage strong{display:block;font-size:12px;color:#2a3d2e;margin:1px 0 3px}
+.stage p{margin:0;color:#758174;font-size:11px;line-height:1.55}
+.stamp{margin-top:6px;font-size:10px;color:#738173}
+.side{display:grid;gap:14px}
+.side .card{padding:21px;box-shadow:0 12px 32px #123d2b08}
+.side h3{font-size:14px;letter-spacing:-.2px;color:var(--forest);margin:0 0 10px}
+.side p,.side li{color:var(--muted);font-size:11px;line-height:1.7}
+.side ul{padding-left:17px;margin:0}
+.side li{margin:6px 0}
+.result-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:20px}
+.result-actions .button{flex:1;min-width:150px}
+[hidden]{display:none!important}
+footer{background:#102f22;color:#dce9df;padding:23px 0;font-size:11px}
+footer p{margin:4px 0 0;color:#b8cabe}
+@media(max-width:780px){.main{grid-template-columns:1fr;margin-top:-26px}.side{grid-template-columns:1fr 1fr}.hero{padding:46px 0 65px}}
+@media(max-width:540px){.nav{min-height:67px}.brand img{width:52px;height:42px}.brand{font-size:12px}.brand small{font-size:7px}.nav-link{padding:8px 10px;font-size:10px}.hero{padding:37px 0 59px}h1{letter-spacing:-1.2px}.side{grid-template-columns:1fr}.main{padding-bottom:45px}.result-actions{flex-direction:column}.result-actions .button{width:100%}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header><div class="shell nav"><a class="brand" href="/" aria-label="Agrolyst SIWES home"><img src="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png" alt="Agrolyst Farms logo"><span>AGROLYST<small>SIWES APPLICATION PORTAL</small></span></a><a class="nav-link" href="/">← Apply for SIWES</a></div></header>
+<section class="hero"><div class="shell"><div class="kicker"><span class="dot"></span> Applicant services</div><h1>Check your application status.</h1><p>Use the Application ID you received after submitting your form and the same email address you used in the application. For your privacy, both details are required.</p></div></section>
+<main class="shell main">
+<section class="card">
+<h2>Application status lookup</h2><p class="muted">Enter your application reference and contact email below.</p>
+<div id="message" class="message" role="status" aria-live="polite"></div>
+<form id="status-form">
+<div class="field"><label for="reference_no">Application ID</label><input id="reference_no" name="reference_no" autocomplete="off" spellcheck="false" placeholder="e.g. AG-SIWES-1A2B3C4D5E" maxlength="50" required><span class="help">Enter the reference exactly as it appeared after submission.</span></div>
+<div class="field"><label for="email">Application email address</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="The email used on your application" required></div>
+<button class="button full" id="check-button" type="submit">Check status <span aria-hidden="true">→</span></button>
+</form>
+<section id="result" class="result" aria-live="polite" hidden>
+<div class="result-top"><div><div class="reference-label">Application ID</div><div class="reference" id="result-reference"></div></div><span class="badge" id="result-badge">Under Review</span></div>
+<div class="stamp" id="result-updated"></div>
+<div class="timeline" id="timeline"></div>
+<div class="final-note" id="status-guidance" style="margin-top:20px;background:#f2f7ed;border:1px solid #e0ebd8;border-radius:9px;padding:13px;color:#455b45;font-size:11px;line-height:1.65"></div>
+<div class="result-actions"><button class="button secondary" id="check-again" type="button">Check another status</button><a class="button" href="/">Register another application</a></div>
+</section>
+</section>
+<aside class="side">
+<div class="card"><h3>Where is my Application ID?</h3><p>Your Application ID is shown after your application has been submitted successfully. If you saved a draft but did not complete the final submission, no Application ID has been issued yet.</p></div>
+<div class="card"><h3>Protect your information</h3><ul><li>Use the email address entered on your application.</li><li>Do not share your Application ID publicly.</li><li>This page displays status information only, not private documents or reviewer notes.</li></ul></div>
+<div class="card"><h3>Need assistance?</h3><p>Contact Agrolyst through its official channels if your ID is lost or you believe your application details are incorrect.</p><a class="button secondary" href="/">Return to application</a></div>
+</aside>
+</main>
+<footer><div class="shell"><strong>Agrolyst Integrated Farms and Services</strong><p>Market to Farm. Empowering Farmers. Growing the Future.</p></div></footer>
+<script type="module">
+const endpoint="https://orhlccyodjuhwoaelmyd.supabase.co/functions/v1/public-siwes-applications";
+const apiKey="sb_publishable_3HEzwj5aGJx3VOQD7l8jwQ_MngS3dcK";
+const form=document.getElementById("status-form");
+const message=document.getElementById("message");
+const button=document.getElementById("check-button");
+const result=document.getElementById("result");
+function showMessage(text,error=false){message.textContent=text;message.className="message show"+(error?" error":"");}
+function formatDate(value){if(!value)return "";const date=new Date(value);if(Number.isNaN(date.getTime()))return "";return new Intl.DateTimeFormat("en-NG",{dateStyle:"medium",timeStyle:"short"}).format(date);}
+function labelFor(status){const map={compliance_incomplete:"Application in progress",under_review:"Under Review",changes_requested:"Changes requested",approved:"Approved",rejected:"Not approved",acceptance_letter_issued:"Acceptance letter issued",resumption_confirmed:"Resumption confirmed",training_in_progress:"Training in progress",completed:"Completed"};return map[status]||"Status updated";}
+function guidanceFor(status){const map={compliance_incomplete:"Your application record is not yet complete. Sign in to the applicant portal or contact Agrolyst for next steps.",under_review:"Your application has been received and is waiting for review. Please check again later for updates.",changes_requested:"The review team has requested changes or additional information. Please sign in to your applicant account or contact Agrolyst for instructions.",approved:"Your application has been approved. Please follow any next-step instructions provided by Agrolyst.",rejected:"A decision has been recorded for this application. Contact Agrolyst through its official channels if you need clarification.",acceptance_letter_issued:"Your acceptance letter has been officially issued. Sign in to the applicant portal with the email linked to your application to view available documents.",resumption_confirmed:"Your resumption has been confirmed. Follow the instructions issued by the Agrolyst team.",training_in_progress:"Your industrial training is marked as in progress. Follow the instructions and reporting requirements shared by Agrolyst.",completed:"Your SIWES training is marked as completed. Contact Agrolyst if you need help with completion documentation."};return map[status]||"Please contact Agrolyst through its official channels for clarification.";}
+function renderTimeline(app){const status=app.status;const states={compliance_incomplete:0,under_review:1,changes_requested:1,approved:2,rejected:2,acceptance_letter_issued:2,resumption_confirmed:3,training_in_progress:3,completed:4};const active=states[status]??1;const terminal=status==="rejected"||status==="completed";const stages=[{title:"Application submitted",desc:"Your application has been recorded.",date:app.submitted_at},{title:"Application review",desc:status==="changes_requested"?"The review team has requested further information.":status==="under_review"?"Your application is waiting for review.":"The application review stage has been updated.",date:app.reviewed_at},{title:"Decision",desc:status==="rejected"?"A decision has been recorded.":status==="approved"?"Your application is approved.":status==="acceptance_letter_issued"?"Your acceptance letter has been issued.":"The final decision will appear here when updated.",date:app.acceptance_letter_issued_at},{title:"Training progress",desc:status==="resumption_confirmed"?"Resumption has been confirmed.":status==="training_in_progress"?"Your SIWES training is in progress.":status==="completed"?"Your training has been marked completed.":"This stage is shown when relevant to your application.",date:app.updated_at},{title:"Training completed",desc:status==="completed"?"Your SIWES application is marked completed.":"Completion will be shown here when your training is finished.",date:app.completed_at}];const target=document.getElementById("timeline");target.innerHTML="";stages.forEach((stage,index)=>{const item=document.createElement("div");item.className="stage";let done=index<active||(status==="completed"&&index===4)||(status==="rejected"&&index<=1);const isActive=!done&&index===active&&!terminal;if(done)item.classList.add("done");if(isActive)item.classList.add("active");const mark=document.createElement("span");mark.className="stage-mark";mark.textContent=done?"✓":String(index+1);const content=document.createElement("div");const title=document.createElement("strong");title.textContent=stage.title;const desc=document.createElement("p");desc.textContent=stage.desc;content.append(title,desc);const date=formatDate(stage.date);if(date){const stamp=document.createElement("div");stamp.className="stamp";stamp.textContent=date;content.append(stamp);}item.append(mark,content);target.append(item);});}
+form.addEventListener("submit",async event=>{event.preventDefault();message.className="message";result.hidden=true;const reference_no=document.getElementById("reference_no").value.trim().toUpperCase();const email=document.getElementById("email").value.trim();if(!reference_no||!email){showMessage("Enter both your Application ID and application email.",true);return;}button.disabled=true;button.textContent="Checking status…";try{const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json","apikey":apiKey},body:JSON.stringify({action:"check-status",reference_no,email})});let data={};try{data=await response.json();}catch{}if(!response.ok||!data.ok||!data.application){throw new Error(data.error||"We could not check the status right now.");}const app=data.application;document.getElementById("result-reference").textContent=app.reference_no;const badge=document.getElementById("result-badge");badge.textContent=labelFor(app.status);badge.className="badge"+(["approved","acceptance_letter_issued","resumption_confirmed","training_in_progress","completed"].includes(app.status)?" green":app.status==="rejected"?" red":"");document.getElementById("result-updated").textContent=app.updated_at?"Last updated "+formatDate(app.updated_at):app.submitted_at?"Submitted "+formatDate(app.submitted_at):"";renderTimeline(app);document.getElementById("status-guidance").textContent=guidanceFor(app.status);result.hidden=false;showMessage("Application record found. Here is the latest status available.",false);result.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});}catch(error){showMessage(error instanceof Error?error.message:"We could not check the status right now. Please try again.",true);}finally{button.disabled=false;button.innerHTML='Check status <span aria-hidden="true">→</span>'; }});
+document.getElementById("check-again").addEventListener("click",()=>{result.hidden=true;message.className="message";document.getElementById("reference_no").focus();});
+const params=new URLSearchParams(location.search);if(params.get("id"))document.getElementById("reference_no").value=params.get("id").toUpperCase();
+</script>
+</body>
+</html>
