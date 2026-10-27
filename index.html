@@ -127,7 +127,7 @@ const policyAgreement=document.getElementById("policy-agreement");
 const policyAccept=document.getElementById("policy-accept");
 const policyScrollStatus=document.getElementById("policy-scroll-status");
 const message=document.getElementById("form-message");
-const submit=document.getElementById("submit-btn");
+let submit=null;
 const PUBLIC_FUNCTION_URL="https://orhlccyodjuhwoaelmyd.supabase.co/functions/v1/public-siwes-applications";
 const PUBLIC_API_KEY="sb_publishable_3HEzwj5aGJx3VOQD7l8jwQ_MngS3dcK";
 const POLICY_VERSION="agrolyst-siwes-applicant-policy-2026-10-27-v1";
@@ -181,7 +181,7 @@ stepDefs.forEach((def,index)=>{
  }
  const actions=document.createElement("div");actions.className="step-actions";
  const back=document.createElement("button");back.type="button";back.className="btn light";back.textContent="← Back";back.addEventListener("click",()=>goToStep(currentStep-1));if(index===0)back.hidden=true;
- const next=document.createElement("button");next.type=index===4?"submit":"button";next.className="btn";next.textContent=index===4?"Submit application ✓":"Save & Next →";next.addEventListener(index===4?"click":"click",event=>{if(index===4)return;event.preventDefault();if(validateStep(index)){saveDraft();goToStep(index+1);}});
+ const next=document.createElement("button");next.type=index===4?"submit":"button";next.className="btn";if(index===4)next.id="submit-final";next.textContent=index===4?"Submit application ✓":"Save & Next →";next.addEventListener(index===4?"click":"click",event=>{if(index===4)return;event.preventDefault();if(validateStep(index)){saveDraft();goToStep(index+1);}});
  actions.append(back,next);pane.append(actions);
  const note=document.createElement("div");note.className="draft-note";note.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v5h8V3M8 13h8M8 17h5"/></svg><span>Save &amp; Next saves a draft on this device only. It is not submitted to Agrolyst until the final step.</span>';pane.append(note);
  panes.append(pane);paneEls.push(pane);
@@ -189,7 +189,7 @@ stepDefs.forEach((def,index)=>{
 fieldGrid.replaceWith(stepper);stepper.after(panes);
 const oldSubmitHint=form.querySelector('p.hint[style*="margin-top:12px"]');if(oldSubmitHint)oldSubmitHint.remove();
 // Move the original submit button out of the form flow and let the final pane's submit button be the only submit action.
-const originalSubmit=document.getElementById("submit-btn");if(originalSubmit)originalSubmit.remove();
+const originalSubmit=document.getElementById("submit-btn");if(originalSubmit)originalSubmit.remove();submit=document.getElementById("submit-final");
 function paneControls(index){return paneEls[index]?.querySelector(".fields");}
 function controlsForStep(index){return [...(paneControls(index)?.querySelectorAll("input,select,textarea")||[])].filter(el=>el.type!=="checkbox"&&el.name!=="website");}
 function validateStep(index){for(const control of controlsForStep(index)){if(!control.checkValidity()){control.reportValidity();control.focus();return false;}}if(index===2){const start=document.getElementById("start_date").value;const end=document.getElementById("end_date").value;if(start&&end&&end<start){showMessage("The proposed end date must be on or after the start date.",true);document.getElementById("end_date").focus();return false;}}return true;}
@@ -205,6 +205,7 @@ readDraft();
 const today=new Date();const min=today.toISOString().slice(0,10);document.getElementById("start_date").min=min;document.getElementById("end_date").min=min;
 document.getElementById("start_date").addEventListener("change",e=>{document.getElementById("end_date").min=e.target.value||min;saveDraft();});
 form.addEventListener("input",event=>{if(event.target?.name)saveDraft();});
+form.addEventListener("change",event=>{if(event.target?.name)saveDraft();});
 document.getElementById("institution").addEventListener("input",()=>{saveDraft();});
 email.addEventListener("focus",()=>{if(!emailPrompted){emailPrompted=true;emailModal.showModal();}});
 document.getElementById("edit-email").addEventListener("click",()=>{emailModal.close();email.focus();});
@@ -214,7 +215,7 @@ document.getElementById("copy-id").addEventListener("click",async()=>{const id=d
 document.getElementById("register-another").addEventListener("click",()=>{try{localStorage.removeItem(DRAFT_KEY);}catch{}window.location.href="/";});
 form.addEventListener("submit",async event=>{
  event.preventDefault();if(isSubmitting)return;message.classList.add("hidden");
- for(let i=0;i<4;i++){if(!validateStep(i)){goToStep(i);return;}}
+ for(let i=0;i<4;i++){const invalid=controlsForStep(i).find(control=>!control.checkValidity());if(invalid){goToStep(i);invalid.reportValidity();invalid.focus();return;}if(i===2){const start=document.getElementById("start_date").value;const end=document.getElementById("end_date").value;if(start&&end&&end<start){goToStep(i);showMessage("The proposed end date must be on or after the start date.",true);document.getElementById("end_date").focus();return;}}}
  if(!document.getElementById("confirm_email").checked){showMessage("Please confirm that the email address is active and accessible to you.",true);return;}
  if(!document.getElementById("privacy_ack").checked){showMessage("Please acknowledge the application privacy notice before submitting.",true);return;}
  if(!policyAccepted){openPolicy();showMessage("Please read and accept the Applicant Policy before submitting.",true);return;}
