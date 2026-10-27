@@ -8,6 +8,8 @@
 <link rel="shortcut icon" type="image/png" href="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png">
 <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png">
 <meta name="description" content="Apply for the Agrolyst SIWES programme without creating an account.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.0/dist/css/intlTelInput.css">
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.0/dist/js/intlTelInput.min.js"></script>
 <title>Apply for SIWES | Agrolyst</title>
 <style>
 :root{--forest:#123d2b;--green:#1e6842;--lime:#d4e76a;--ink:#18281f;--muted:#68756b;--line:#dce5d9;--paper:#f4f7f0;--white:#fff;--soft:#edf4e9;--gold:#e9bf61}
@@ -72,6 +74,14 @@ header{background:#ffffffeb;border-bottom:1px solid var(--line);backdrop-filter:
 @keyframes addressSpin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.address-spinner{animation:none}}
 
+/* International telephone selector */
+.iti{width:100%;display:block}
+.iti input#phone{width:100%;min-height:46px;padding-top:12px;padding-bottom:12px}
+.iti__country-container{z-index:4}
+.iti__dropdown-content{z-index:90;border:1px solid #dce5d9;box-shadow:0 16px 38px #123d2b20;border-radius:10px}
+.iti__search-input{padding:10px!important;border:1px solid #cfdacb!important;border-radius:7px!important;margin:8px!important;width:calc(100% - 16px)!important}
+#phone-hint{display:block;line-height:1.45;margin-top:5px}
+#phone-hint.phone-invalid{color:#a12c1e}
 </style>
 </head>
 <body>
@@ -88,7 +98,7 @@ header{background:#ffffffeb;border-bottom:1px solid var(--line);backdrop-filter:
 <div class="group-heading"><span class="group-number">01</span>Personal information</div>
 <div class="field"><label for="full_name">Full name *</label><input id="full_name" name="full_name" autocomplete="name" required maxlength="160"></div>
 <div class="field"><label for="email">Active email address *</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254" aria-describedby="email-hint"><span class="hint" id="email-hint">Use an inbox you can access. Do not use someone else's email.</span></div>
-<div class="field"><label for="phone">Phone number *</label><input id="phone" name="phone" type="tel" autocomplete="tel" required maxlength="40"></div>
+<div class="field"><label for="phone">Phone number *</label><input id="phone" name="phone" type="tel" autocomplete="tel-national" inputmode="tel" required maxlength="40" aria-describedby="phone-hint" placeholder="Enter your phone number"><span class="hint" id="phone-hint" role="status">Choose your country and enter a valid phone number. The country code will be saved automatically.</span></div>
 <div class="group-heading"><span class="group-number">02</span>Academic background</div>
 <div class="field"><label for="institution">Institution *</label><input id="institution" name="institution" list="institution-list" required maxlength="200" autocomplete="organization" aria-describedby="institution-hint" placeholder="Start typing your university name"><datalist id="institution-list"></datalist><span class="hint" id="institution-hint" role="status">Loading institutions from Agrolyst records… You can type a name while the list loads.</span></div>
 <div class="field"><label for="department">Department / Faculty *</label><input id="department" name="department" required maxlength="160"></div>
@@ -157,11 +167,14 @@ let policyScrolledToEnd=false;
 let emailPrompted=false;
 let currentStep=0;
 let isSubmitting=false;
+let phoneIti=null;
+let phoneUtilsReady=Promise.resolve(false);
+let savedPhoneCountry="ng";
 try{policyAccepted=localStorage.getItem("agrolyst-siwes-policy-version")===POLICY_VERSION;}catch{}
 function showMessage(text,error=false){message.textContent=text;message.classList.remove("hidden","error");if(error)message.classList.add("error");}
 function getDraft(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||"{}")||{};}catch{return {};}}
-function saveDraft(){try{const values={};form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox")return;values[el.name]=el.value;});localStorage.setItem(DRAFT_KEY,JSON.stringify({values,currentStep,savedAt:new Date().toISOString()}));}catch{}}
-function readDraft(){const draft=getDraft();if(!draft.values)return;form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox")return;if(Object.prototype.hasOwnProperty.call(draft.values,el.name))el.value=draft.values[el.name];});if(Number.isInteger(draft.currentStep))currentStep=Math.max(0,Math.min(4,draft.currentStep));}
+function saveDraft(){try{const values={};form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox")return;values[el.name]=el.value;});const phoneCountry=phoneIti?.getSelectedCountryData()?.iso2||savedPhoneCountry||"ng";localStorage.setItem(DRAFT_KEY,JSON.stringify({values,phoneCountry,currentStep,savedAt:new Date().toISOString()}));}catch{}}
+function readDraft(){const draft=getDraft();if(!draft.values)return;savedPhoneCountry=draft.phoneCountry||"ng";if(phoneIti){try{phoneIti.setCountry(savedPhoneCountry);}catch{}}form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox")return;if(Object.prototype.hasOwnProperty.call(draft.values,el.name))el.value=draft.values[el.name];});if(phoneIti&&draft.values.phone){try{phoneIti.setNumber(draft.values.phone);}catch{document.getElementById("phone").value=draft.values.phone;}}if(Number.isInteger(draft.currentStep))currentStep=Math.max(0,Math.min(4,draft.currentStep));}
 async function loadInstitutionSuggestions(){
  const input=document.getElementById("institution");
  const list=document.getElementById("institution-list");
@@ -227,7 +240,7 @@ stepDefs.forEach((def,index)=>{
  }
  const actions=document.createElement("div");actions.className="step-actions";
  const back=document.createElement("button");back.type="button";back.className="btn light";back.textContent="← Back";back.addEventListener("click",()=>goToStep(currentStep-1));if(index===0)back.hidden=true;
- const next=document.createElement("button");next.type=index===4?"submit":"button";next.className="btn";if(index===4)next.id="submit-final";next.textContent=index===4?"Submit application ✓":"Save & Next →";next.addEventListener("click",async event=>{if(index===4)return;event.preventDefault();if(!validateStep(index))return;if(index===0){const previousText=next.textContent;next.disabled=true;next.textContent="Checking email…";const available=await checkEmailAvailability();next.disabled=false;next.textContent=previousText;if(!available){document.getElementById("email").focus();return;}}saveDraft();goToStep(index+1);});
+ const next=document.createElement("button");next.type=index===4?"submit":"button";next.className="btn";if(index===4)next.id="submit-final";next.textContent=index===4?"Submit application ✓":"Save & Next →";next.addEventListener("click",async event=>{if(index===4)return;event.preventDefault();if(!(await validateStep(index)))return;if(index===0){const previousText=next.textContent;next.disabled=true;next.textContent="Checking email…";const available=await checkEmailAvailability();next.disabled=false;next.textContent=previousText;if(!available){document.getElementById("email").focus();return;}}saveDraft();goToStep(index+1);});
  actions.append(back,next);pane.append(actions);
  const note=document.createElement("div");note.className="draft-note";note.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v5h8V3M8 13h8M8 17h5"/></svg><span>Save &amp; Next saves a draft on this device only. It is not submitted to Agrolyst until the final step.</span>';pane.append(note);
  panes.append(pane);paneEls.push(pane);
@@ -238,7 +251,7 @@ const oldSubmitHint=form.querySelector('p.hint[style*="margin-top:12px"]');if(ol
 const originalSubmit=document.getElementById("submit-btn");if(originalSubmit)originalSubmit.remove();submit=document.getElementById("submit-final");
 function paneControls(index){return paneEls[index]?.querySelector(".fields");}
 function controlsForStep(index){return [...(paneControls(index)?.querySelectorAll("input,select,textarea")||[])].filter(el=>el.type!=="checkbox"&&el.name!=="website");}
-function validateStep(index){for(const control of controlsForStep(index)){if(!control.checkValidity()){control.reportValidity();control.focus();return false;}}if(index===2){const start=document.getElementById("start_date").value;const end=document.getElementById("end_date").value;if(start&&end&&end<start){showMessage("The proposed end date must be on or after the start date.",true);document.getElementById("end_date").focus();return false;}}return true;}
+async function validateStep(index){for(const control of controlsForStep(index)){if(!control.checkValidity()){control.reportValidity();control.focus();return false;}}if(index===0){if(!phoneIti){showMessage("The country-code selector could not load. Refresh the page before continuing.",true);phoneInput.focus();return false;}const utilsLoaded=await phoneUtilsReady;if(!utilsLoaded){showMessage("Phone validation could not load. Refresh the page before continuing.",true);phoneHint.classList.add("phone-invalid");phoneInput.focus();return false;}if(!phoneIti.isValidNumber()){const errorText="Enter a valid phone number for the selected country code.";phoneInput.setCustomValidity(errorText);phoneHint.textContent=errorText;phoneHint.classList.add("phone-invalid");phoneInput.reportValidity();phoneInput.focus();return false;}phoneInput.setCustomValidity("");phoneHint.classList.remove("phone-invalid");phoneHint.textContent="Valid phone number: "+phoneIti.getNumber("INTERNATIONAL");}if(index===2){const start=document.getElementById("start_date").value;const end=document.getElementById("end_date").value;if(start&&end&&end<start){showMessage("The proposed end date must be on or after the start date.",true);document.getElementById("end_date").focus();return false;}}return true;}
 async function checkEmailAvailability(){
  const emailInput=document.getElementById("email");
  const emailValue=emailInput.value.trim().toLowerCase();
@@ -266,13 +279,34 @@ async function checkEmailAvailability(){
  }
 }
 function goToStep(index){if(index<0||index>=paneEls.length)return;currentStep=index;paneEls.forEach((pane,i)=>{pane.hidden=i!==index;});[...stepper.children].forEach((item,i)=>{item.classList.toggle("active",i===index);item.classList.toggle("done",i<index);item.setAttribute("aria-current",i===index?"step":"false");});message.classList.add("hidden");if(index===4)renderReview();saveDraft();const top=form.getBoundingClientRect().top+window.scrollY-24;window.scrollTo({top:Math.max(0,top),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});}
-function valueOf(id){const el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():"Not provided";}
+function valueOf(id){if(id==="phone"&&phoneIti){try{const formatted=phoneIti.getNumber("INTERNATIONAL");if(formatted)return formatted;}catch{}}const el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():"Not provided";}
 function renderReview(){const target=document.getElementById("review-summary");target.innerHTML="";const cards=[
  {title:"Personal information",step:0,fields:[["Full name","full_name"],["Email address","email"],["Phone","phone"]]},
  {title:"Academic background",step:1,fields:[["Institution","institution"],["Department","department"],["Course of study","course_of_study"],["Current level","study_level"]]},
  {title:"Training preferences",step:2,fields:[["Training area","training_area"],["Duration","duration"],["Start date","start_date"],["End date","end_date"]]},
  {title:"Contact details",step:3,fields:[["Address","address"],["Emergency contact","emergency_contact_name"],["Emergency phone","emergency_contact_phone"]]}
 ];for(const card of cards){const box=document.createElement("div");box.className="review-card";const header=document.createElement("div");header.className="review-card-head";const title=document.createElement("strong");title.textContent=card.title;const edit=document.createElement("button");edit.type="button";edit.textContent="Edit";edit.addEventListener("click",()=>goToStep(card.step));header.append(title,edit);box.append(header);const pairs=document.createElement("div");pairs.className="review-pairs";for(const [label,id] of card.fields){const pair=document.createElement("div");pair.className="review-pair";const small=document.createElement("small");small.textContent=label;const span=document.createElement("span");span.textContent=valueOf(id);pair.append(small,span);pairs.append(pair);}box.append(pairs);target.append(box);}}
+const phoneInput=document.getElementById("phone");
+const phoneHint=document.getElementById("phone-hint");
+if(phoneInput&&typeof window.intlTelInput==="function"){
+ phoneIti=window.intlTelInput(phoneInput,{
+  initialCountry:"ng",
+  separateDialCode:true,
+  nationalMode:true,
+  countrySearch:true,
+  autoPlaceholder:"aggressive",
+  strictMode:true,
+  formatAsYouType:true,
+  useFullscreenPopup:true,
+  loadUtils:()=>import("https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.0/dist/js/utils.js")
+ });
+ phoneUtilsReady=phoneIti.promise.then(()=>{phoneHint.textContent="Country code selected automatically. Choose another country if needed, and enter a valid number.";return true;}).catch(error=>{console.warn("Phone validation utilities did not load.",error);phoneHint.textContent="Phone validation could not load. Refresh the page to continue securely.";phoneHint.classList.add("phone-invalid");return false;});
+ phoneInput.addEventListener("input",()=>{phoneInput.setCustomValidity("");phoneHint.classList.remove("phone-invalid");phoneHint.textContent="Country code selected automatically. We’ll check the number before continuing.";saveDraft();});
+ phoneInput.addEventListener("countrychange",()=>{savedPhoneCountry=phoneIti.getSelectedCountryData()?.iso2||"ng";phoneInput.setCustomValidity("");phoneHint.classList.remove("phone-invalid");saveDraft();});
+}else if(phoneInput&&phoneHint){
+ phoneHint.textContent="The country-code selector could not load. Please refresh this page before entering your application.";
+ phoneHint.classList.add("phone-invalid");
+}
 readDraft();
 loadInstitutionSuggestions();
 
@@ -312,11 +346,14 @@ document.getElementById("copy-id").addEventListener("click",async()=>{const id=d
 document.getElementById("register-another").addEventListener("click",()=>{try{localStorage.removeItem(DRAFT_KEY);}catch{}window.location.href="/";});
 form.addEventListener("submit",async event=>{
  event.preventDefault();if(isSubmitting)return;message.classList.add("hidden");
- for(let i=0;i<4;i++){const invalid=controlsForStep(i).find(control=>!control.checkValidity());if(invalid){goToStep(i);invalid.reportValidity();invalid.focus();return;}if(i===2){const start=document.getElementById("start_date").value;const end=document.getElementById("end_date").value;if(start&&end&&end<start){goToStep(i);showMessage("The proposed end date must be on or after the start date.",true);document.getElementById("end_date").focus();return;}}}
+ for(let i=0;i<4;i++){if(!(await validateStep(i))){goToStep(i);return;}}
  if(!document.getElementById("confirm_email").checked){showMessage("Please confirm that the email address is active and accessible to you.",true);return;}
  if(!document.getElementById("privacy_ack").checked){showMessage("Please acknowledge the application privacy notice before submitting.",true);return;}
  if(!policyAccepted){openPolicy();showMessage("Please read and accept the Applicant Policy before submitting.",true);return;}
  const application=Object.fromEntries(new FormData(form).entries());
+ if(!phoneIti||!(await phoneUtilsReady)||!phoneIti.isValidNumber()){goToStep(0);showMessage("Please enter a valid phone number for the selected country code.",true);return;}
+ application.phone=phoneIti.getNumber();
+ if(!application.phone||!application.phone.startsWith("+")){goToStep(0);showMessage("We could not format the phone number. Please check the number and country code.",true);return;}
  isSubmitting=true;submit.disabled=true;submit.textContent="Submitting application…";
  try{
   const response=await fetch(PUBLIC_FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":PUBLIC_API_KEY},body:JSON.stringify({action:"submit",application,confirm_email:document.getElementById("confirm_email").checked,privacy_ack:document.getElementById("privacy_ack").checked,policy_accepted:policyAccepted,policy_version:POLICY_VERSION})});
