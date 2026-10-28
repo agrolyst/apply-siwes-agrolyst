@@ -82,6 +82,13 @@ header{background:#ffffffeb;border-bottom:1px solid var(--line);backdrop-filter:
 .iti__search-input{padding:10px!important;border:1px solid #cfdacb!important;border-radius:7px!important;margin:8px!important;width:calc(100% - 16px)!important}
 #phone-hint{display:block;line-height:1.45;margin-top:5px}
 #phone-hint.phone-invalid{color:#a12c1e}
+
+/* Phone collection is temporarily paused; the country picker remains usable. */
+.phone-unavailable-field .iti{width:100%;max-width:100%}
+.phone-unavailable-field .iti input#phone{background:#f3f6f1;color:#6e7c70;cursor:not-allowed;border-style:dashed}
+.phone-unavailable-field .iti input#phone::placeholder{color:#788679;opacity:1}
+.phone-unavailable-field .iti__selected-country{cursor:pointer}
+.phone-unavailable-field .iti__selected-country:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -99,7 +106,7 @@ header{background:#ffffffeb;border-bottom:1px solid var(--line);backdrop-filter:
 <div class="group-heading"><span class="group-number">01</span>Personal information</div>
 <div class="field"><label for="full_name">Full name *</label><input id="full_name" name="full_name" autocomplete="name" required maxlength="160"></div>
 <div class="field"><label for="email">Active email address *</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254" aria-describedby="email-hint"><span class="hint" id="email-hint">Use an inbox you can access. Do not use someone else's email.</span></div>
-<div class="field"><label for="phone">Phone number *</label><input id="phone" name="phone" type="tel" autocomplete="tel-national" inputmode="tel" required maxlength="40" aria-describedby="phone-hint" placeholder="Enter your phone number"><span class="hint" id="phone-hint" role="status">Choose your country and enter a valid phone number. The country code will be saved automatically.</span></div>
+<div class="field phone-unavailable-field"><label for="phone">Phone number <span class="hint">(temporarily unavailable)</span></label><input id="phone" name="phone" type="tel" autocomplete="tel-national" inputmode="tel" readonly maxlength="40" aria-describedby="phone-hint" placeholder="Not available for now" title="Phone number collection is temporarily unavailable"><span class="hint" id="phone-hint" role="status">Phone number collection is temporarily paused. You may select a country code, but email is currently the only available contact method.</span></div>
 <div class="group-heading"><span class="group-number">02</span>Academic background</div>
 <div class="field"><label for="institution">Institution *</label><input id="institution" name="institution" list="institution-list" required maxlength="200" autocomplete="organization" aria-describedby="institution-hint" placeholder="Start typing your university name"><datalist id="institution-list"></datalist><span class="hint" id="institution-hint" role="status">Loading institutions from Agrolyst records… You can type a name while the list loads.</span></div>
 <div class="field"><label for="department">Department / Faculty *</label><input id="department" name="department" required maxlength="160"></div>
@@ -113,7 +120,7 @@ header{background:#ffffffeb;border-bottom:1px solid var(--line);backdrop-filter:
 <div class="group-heading"><span class="group-number">04</span>Contact and emergency details</div>
 <div class="field full"><label for="address">Contact address *</label><div class="address-autocomplete"><input id="address" name="address" type="text" autocomplete="street-address" required maxlength="500" placeholder="Start typing your street, area or landmark" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="address-suggestions" aria-describedby="address-hint"><div id="address-suggestions" class="address-suggestions" role="listbox" aria-label="Google address suggestions" hidden></div></div><span class="hint" id="address-hint" role="status">Start typing at least 3 characters to find address suggestions from Google. You can also enter your address manually.</span></div>
 <div class="field"><label for="emergency_contact_name">Emergency contact name (optional)</label><input id="emergency_contact_name" name="emergency_contact_name" maxlength="160"></div>
-<div class="field"><label for="emergency_contact_phone">Emergency contact phone (optional)</label><input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" maxlength="40"></div>
+<div class="field"><label for="emergency_contact_phone">Emergency contact phone <span class="hint">(not available)</span></label><input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" disabled placeholder="Not available for now"><span class="hint">Phone contact is temporarily unavailable. Please use your email address.</span></div>
 <div class="field full"><label for="reason_for_applying">Why would you like to join Agrolyst? (optional)</label><textarea id="reason_for_applying" name="reason_for_applying" maxlength="1500"></textarea></div>
 <div class="field" style="display:none" aria-hidden="true"><label for="website">Leave this field empty</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
 </div>
@@ -174,8 +181,8 @@ let savedPhoneCountry="ng";
 try{policyAccepted=localStorage.getItem("agrolyst-siwes-policy-version")===POLICY_VERSION;}catch{}
 function showMessage(text,error=false){message.textContent=text;message.classList.remove("hidden","error");if(error)message.classList.add("error");}
 function getDraft(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||"{}")||{};}catch{return {};}}
-function saveDraft(){try{const values={};form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox")return;values[el.name]=el.value;});const phoneCountry=phoneIti?.getSelectedCountryData()?.iso2||savedPhoneCountry||"ng";localStorage.setItem(DRAFT_KEY,JSON.stringify({values,phoneCountry,currentStep,savedAt:new Date().toISOString()}));}catch{}}
-function readDraft(){const draft=getDraft();if(!draft.values)return;savedPhoneCountry=draft.phoneCountry||"ng";if(phoneIti){try{phoneIti.setCountry(savedPhoneCountry);}catch{}}form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox")return;if(Object.prototype.hasOwnProperty.call(draft.values,el.name))el.value=draft.values[el.name];});if(phoneIti&&draft.values.phone){try{phoneIti.setNumber(draft.values.phone);}catch{document.getElementById("phone").value=draft.values.phone;}}if(Number.isInteger(draft.currentStep))currentStep=Math.max(0,Math.min(4,draft.currentStep));}
+function saveDraft(){try{const values={};form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox"||["phone","emergency_contact_phone"].includes(el.name))return;values[el.name]=el.value;});const phoneCountry=phoneIti?.getSelectedCountryData()?.iso2||savedPhoneCountry||"ng";localStorage.setItem(DRAFT_KEY,JSON.stringify({values,phoneCountry,currentStep,savedAt:new Date().toISOString()}));}catch{}}
+function readDraft(){const draft=getDraft();if(!draft.values)return;savedPhoneCountry=draft.phoneCountry||"ng";if(phoneIti){try{phoneIti.setCountry(savedPhoneCountry);}catch{}}form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox"||["phone","emergency_contact_phone"].includes(el.name))return;if(Object.prototype.hasOwnProperty.call(draft.values,el.name))el.value=draft.values[el.name];});const phone=document.getElementById("phone");if(phone)phone.value="";if(Number.isInteger(draft.currentStep))currentStep=Math.max(0,Math.min(4,draft.currentStep));}
 async function loadInstitutionSuggestions(){
  const input=document.getElementById("institution");
  const list=document.getElementById("institution-list");
@@ -218,7 +225,7 @@ const originalFields=[...fieldGrid.querySelectorAll(".field")];
 const fieldMap=new Map();
 for(const field of originalFields){const control=field.querySelector("input,select,textarea");if(control)fieldMap.set(control.id,field);}
 const stepDefs=[
- {title:"Personal",heading:"Personal information",desc:"Start with your name and the email and phone number you can access.",ids:["full_name","email","phone"]},
+ {title:"Personal",heading:"Personal information",desc:"Start with your name and active email address. Phone contact is temporarily unavailable.",ids:["full_name","email","phone"]},
  {title:"Academic",heading:"Academic background",desc:"Tell us about your school, programme and current level of study.",ids:["institution","department","course_of_study","study_level"]},
  {title:"Training",heading:"Training preferences",desc:"Choose your preferred placement area and proposed training dates.",ids:["training_area","duration","start_date","end_date"]},
  {title:"Contact",heading:"Contact and emergency details",desc:"Provide your contact address and optional emergency contact information.",ids:["address","emergency_contact_name","emergency_contact_phone","reason_for_applying","website"]},
@@ -241,7 +248,7 @@ stepDefs.forEach((def,index)=>{
  }
  const actions=document.createElement("div");actions.className="step-actions";
  const back=document.createElement("button");back.type="button";back.className="btn light";back.textContent="← Back";back.addEventListener("click",()=>goToStep(currentStep-1));if(index===0)back.hidden=true;
- const next=document.createElement("button");next.type=index===4?"submit":"button";next.className="btn";if(index===4)next.id="submit-final";next.textContent=index===4?"Submit application ✓":"Save & Next →";next.addEventListener("click",async event=>{if(index===4)return;event.preventDefault();if(!(await validateStep(index)))return;if(index===0){const previousText=next.textContent;next.disabled=true;next.textContent="Checking email…";const emailAvailable=await checkEmailAvailability();if(!emailAvailable){next.disabled=false;next.textContent=previousText;document.getElementById("email").focus();return;}next.textContent="Checking phone…";const phoneAvailable=await checkPhoneAvailability();next.disabled=false;next.textContent=previousText;if(!phoneAvailable){document.getElementById("phone").focus();return;}}saveDraft();goToStep(index+1);});
+ const next=document.createElement("button");next.type=index===4?"submit":"button";next.className="btn";if(index===4)next.id="submit-final";next.textContent=index===4?"Submit application ✓":"Save & Next →";next.addEventListener("click",async event=>{if(index===4)return;event.preventDefault();if(!(await validateStep(index)))return;if(index===0){const previousText=next.textContent;next.disabled=true;next.textContent="Checking email…";const emailAvailable=await checkEmailAvailability();next.disabled=false;next.textContent=previousText;if(!emailAvailable){document.getElementById("email").focus();return;}}saveDraft();goToStep(index+1);});
  actions.append(back,next);pane.append(actions);
  const note=document.createElement("div");note.className="draft-note";note.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v5h8V3M8 13h8M8 17h5"/></svg><span>Save &amp; Next saves a draft on this device only. It is not submitted to Agrolyst until the final step.</span>';pane.append(note);
  panes.append(pane);paneEls.push(pane);
@@ -252,7 +259,7 @@ const oldSubmitHint=form.querySelector('p.hint[style*="margin-top:12px"]');if(ol
 const originalSubmit=document.getElementById("submit-btn");if(originalSubmit)originalSubmit.remove();submit=document.getElementById("submit-final");
 function paneControls(index){return paneEls[index]?.querySelector(".fields");}
 function controlsForStep(index){return [...(paneControls(index)?.querySelectorAll("input,select,textarea")||[])].filter(el=>el.type!=="checkbox"&&el.name!=="website");}
-async function validateStep(index){for(const control of controlsForStep(index)){if(!control.checkValidity()){control.reportValidity();control.focus();return false;}}if(index===0){if(!phoneIti){showMessage("The country-code selector could not load. Refresh the page before continuing.",true);phoneInput.focus();return false;}const utilsLoaded=await phoneUtilsReady;if(!utilsLoaded){showMessage("Phone validation could not load. Refresh the page before continuing.",true);phoneHint.classList.add("phone-invalid");phoneInput.focus();return false;}if(!phoneIti.isValidNumber()){const errorText="Enter a valid phone number for the selected country code.";phoneInput.setCustomValidity(errorText);phoneHint.textContent=errorText;phoneHint.classList.add("phone-invalid");phoneInput.reportValidity();phoneInput.focus();return false;}phoneInput.setCustomValidity("");phoneHint.classList.remove("phone-invalid");phoneHint.textContent="Valid phone number: "+phoneIti.getNumber("INTERNATIONAL");}if(index===2){const start=document.getElementById("start_date").value;const end=document.getElementById("end_date").value;if(start&&end&&end<start){showMessage("The proposed end date must be on or after the start date.",true);document.getElementById("end_date").focus();return false;}}return true;}
+async function validateStep(index){for(const control of controlsForStep(index)){if(!control.checkValidity()){control.reportValidity();control.focus();return false;}}if(index===2){const start=document.getElementById("start_date").value;const end=document.getElementById("end_date").value;if(start&&end&&end<start){showMessage("The proposed end date must be on or after the start date.",true);document.getElementById("end_date").focus();return false;}}return true;}
 async function checkEmailAvailability(){
  const emailInput=document.getElementById("email");
  const emailValue=emailInput.value.trim().toLowerCase();
@@ -279,40 +286,9 @@ async function checkEmailAvailability(){
   return false;
  }
 }
-async function checkPhoneAvailability(){
- const input=document.getElementById("phone");
- const hint=document.getElementById("phone-hint");
- if(!phoneIti||!(await phoneUtilsReady)||!phoneIti.isValidNumber()){
-  const reason="Enter a valid phone number for the selected country code.";
-  input.setCustomValidity(reason);hint.textContent=reason;hint.classList.add("phone-invalid");input.reportValidity();input.focus();return false;
- }
- const phone=phoneIti.getNumber();
- if(!phone||!phone.startsWith("+")){
-  const reason="We could not format this number. Please check the number and country code.";
-  input.setCustomValidity(reason);hint.textContent=reason;hint.classList.add("phone-invalid");showMessage(reason,true);return false;
- }
- input.setCustomValidity("");
- showMessage("Checking whether this phone number has already been used…",false);
- try{
-  const response=await fetch(PUBLIC_FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":PUBLIC_API_KEY},body:JSON.stringify({action:"check-phone",phone})});
-  const result=await response.json().catch(()=>({}));
-  if(!response.ok||result.ok!==true||typeof result.available!=="boolean"){
-   throw new Error(result.error||"We could not verify this phone number right now. Please try again.");
-  }
-  if(!result.available){
-   const reason=result.error||"This phone number has already been used for a SIWES application. Please use your existing application or contact Agrolyst for assistance.";
-   input.setCustomValidity(reason);hint.textContent=reason;hint.classList.add("phone-invalid");showMessage(reason,true);input.reportValidity();return false;
-  }
-  input.setCustomValidity("");hint.classList.remove("phone-invalid");hint.textContent="Valid phone number: "+phoneIti.getNumber("INTERNATIONAL")+" · Available for a new application.";
-  message.classList.add("hidden");
-  return true;
- }catch(error){
-  const reason=error instanceof Error?error.message:"We could not verify this phone number right now. Please check your connection and try again.";
-  hint.textContent=reason;hint.classList.add("phone-invalid");showMessage(reason,true);return false;
- }
-}
+
 function goToStep(index){if(index<0||index>=paneEls.length)return;currentStep=index;paneEls.forEach((pane,i)=>{pane.hidden=i!==index;});[...stepper.children].forEach((item,i)=>{item.classList.toggle("active",i===index);item.classList.toggle("done",i<index);item.setAttribute("aria-current",i===index?"step":"false");});message.classList.add("hidden");if(index===4)renderReview();saveDraft();const top=form.getBoundingClientRect().top+window.scrollY-24;window.scrollTo({top:Math.max(0,top),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});}
-function valueOf(id){if(id==="phone"&&phoneIti){try{const formatted=phoneIti.getNumber("INTERNATIONAL");if(formatted)return formatted;}catch{}}const el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():"Not provided";}
+function valueOf(id){if(id==="phone"||id==="emergency_contact_phone")return "Not available for now";const el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():"Not provided";}
 function renderReview(){const target=document.getElementById("review-summary");target.innerHTML="";const cards=[
  {title:"Personal information",step:0,fields:[["Full name","full_name"],["Email address","email"],["Phone","phone"]]},
  {title:"Academic background",step:1,fields:[["Institution","institution"],["Department","department"],["Course of study","course_of_study"],["Current level","study_level"]]},
@@ -323,6 +299,7 @@ function renderReview(){const target=document.getElementById("review-summary");t
 paneEls.forEach((pane,index)=>{pane.hidden=index!==0;});
 const phoneInput=document.getElementById("phone");
 const phoneHint=document.getElementById("phone-hint");
+if(phoneInput){phoneInput.readOnly=true;phoneInput.required=false;phoneInput.value="";phoneInput.placeholder="Not available for now";}
 if(phoneInput&&typeof window.intlTelInput==="function"){
  phoneIti=window.intlTelInput(phoneInput,{
   initialCountry:"ng",
@@ -335,12 +312,11 @@ if(phoneInput&&typeof window.intlTelInput==="function"){
   useFullscreenPopup:true,
   loadUtils:()=>import("https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.0/dist/js/utils.js")
  });
- phoneUtilsReady=phoneIti.promise.then(()=>{phoneHint.textContent="Country code selected automatically. Choose another country if needed, and enter a valid number.";return true;}).catch(error=>{console.warn("Phone validation utilities did not load.",error);phoneHint.textContent="Phone validation could not load. Refresh the page to continue securely.";phoneHint.classList.add("phone-invalid");return false;});
- phoneInput.addEventListener("input",()=>{phoneInput.setCustomValidity("");phoneHint.classList.remove("phone-invalid");phoneHint.textContent="Country code selected automatically. We’ll check the number before continuing.";saveDraft();});
- phoneInput.addEventListener("countrychange",()=>{savedPhoneCountry=phoneIti.getSelectedCountryData()?.iso2||"ng";phoneInput.setCustomValidity("");phoneHint.classList.remove("phone-invalid");saveDraft();});
+ phoneUtilsReady=phoneIti.promise.then(()=>{phoneHint.textContent="Phone number collection is temporarily paused. You may select a country code, but email is currently the only available contact method.";return true;}).catch(error=>{console.warn("Phone validation utilities did not load.",error);phoneHint.textContent="Phone collection is paused; email is the only active contact method. The country selector may be unavailable until refreshed.";return false;});
+ phoneInput.addEventListener("input",()=>{phoneInput.value="";});
+ phoneInput.addEventListener("countrychange",()=>{savedPhoneCountry=phoneIti.getSelectedCountryData()?.iso2||"ng";phoneInput.value="";phoneHint.textContent="Phone number collection is temporarily paused. You may select a country code, but email is currently the only available contact method.";saveDraft();});
 }else if(phoneInput&&phoneHint){
- phoneHint.textContent="The country-code selector could not load. Please refresh this page before entering your application.";
- phoneHint.classList.add("phone-invalid");
+ phoneHint.textContent="Phone number collection is temporarily paused. Email is the only active contact method. The country selector could not load.";
 }
 readDraft();
 loadInstitutionSuggestions();
@@ -386,20 +362,17 @@ form.addEventListener("submit",async event=>{
  if(!document.getElementById("privacy_ack").checked){showMessage("Please acknowledge the application privacy notice before submitting.",true);return;}
  if(!policyAccepted){openPolicy();showMessage("Please read and accept the Applicant Policy before submitting.",true);return;}
  const application=Object.fromEntries(new FormData(form).entries());
- if(!phoneIti||!(await phoneUtilsReady)||!phoneIti.isValidNumber()){goToStep(0);showMessage("Please enter a valid phone number for the selected country code.",true);return;}
- application.phone=phoneIti.getNumber();
- if(!application.phone||!application.phone.startsWith("+")){goToStep(0);showMessage("We could not format the phone number. Please check the number and country code.",true);return;}
+ delete application.phone;delete application.emergency_contact_phone;
  isSubmitting=true;submit.disabled=true;submit.textContent="Submitting application…";
  try{
   const response=await fetch(PUBLIC_FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":PUBLIC_API_KEY},body:JSON.stringify({action:"submit",application,confirm_email:document.getElementById("confirm_email").checked,privacy_ack:document.getElementById("privacy_ack").checked,policy_accepted:policyAccepted,policy_version:POLICY_VERSION})});
   let result={};try{result=await response.json();}catch{}
   if(!response.ok||!result.ok||!result.application?.reference_no){
-   if(response.status===409&&(result.field==="email"||result.field==="phone")){
+   if(response.status===409&&result.field==="email"){
     const reason=result.error||"This contact detail has already been used for a SIWES application.";
     goToStep(0);
     const fieldInput=document.getElementById(result.field);
     if(fieldInput){fieldInput.setCustomValidity(reason);fieldInput.focus();}
-    if(result.field==="phone"){phoneHint.textContent=reason;phoneHint.classList.add("phone-invalid");}
     showMessage(reason,true);
     return;
    }
