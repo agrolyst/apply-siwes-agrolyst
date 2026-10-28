@@ -306,7 +306,7 @@ if(phoneInput&&typeof window.intlTelInput==="function"){
   separateDialCode:true,
   nationalMode:true,
   countrySearch:true,
-  autoPlaceholder:"aggressive",
+  autoPlaceholder:"off",
   strictMode:true,
   formatAsYouType:true,
   useFullscreenPopup:true,
@@ -314,7 +314,7 @@ if(phoneInput&&typeof window.intlTelInput==="function"){
  });
  phoneUtilsReady=phoneIti.promise.then(()=>{phoneHint.textContent="Phone number collection is temporarily paused. You may select a country code, but email is currently the only available contact method.";return true;}).catch(error=>{console.warn("Phone validation utilities did not load.",error);phoneHint.textContent="Phone collection is paused; email is the only active contact method. The country selector may be unavailable until refreshed.";return false;});
  phoneInput.addEventListener("input",()=>{phoneInput.value="";});
- phoneInput.addEventListener("countrychange",()=>{savedPhoneCountry=phoneIti.getSelectedCountryData()?.iso2||"ng";phoneInput.value="";phoneHint.textContent="Phone number collection is temporarily paused. You may select a country code, but email is currently the only available contact method.";saveDraft();});
+ phoneInput.addEventListener("countrychange",()=>{savedPhoneCountry=phoneIti.getSelectedCountryData()?.iso2||"ng";phoneInput.value="";phoneInput.placeholder="Not available for now";phoneHint.textContent="Phone number collection is temporarily paused. You may select a country code, but email is currently the only available contact method.";saveDraft();});
 }else if(phoneInput&&phoneHint){
  phoneHint.textContent="Phone number collection is temporarily paused. Email is the only active contact method. The country selector could not load.";
 }
