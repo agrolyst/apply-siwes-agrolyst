@@ -76,6 +76,25 @@ footer p{margin:4px 0 0;color:#b8cabe}
 @media(max-width:780px){.main{grid-template-columns:1fr;margin-top:-26px}.side{grid-template-columns:1fr 1fr}.hero{padding:46px 0 65px}}
 @media(max-width:540px){.nav{min-height:67px}.brand img{width:52px;height:42px}.brand{font-size:12px}.brand small{font-size:7px}.nav-link{padding:8px 10px;font-size:10px}.hero{padding:37px 0 59px}h1{letter-spacing:-1.2px}.side{grid-template-columns:1fr}.main{padding-bottom:45px}.result-actions{flex-direction:column}.result-actions .button{width:100%}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Acceptance letter is only surfaced in the browser print view after explicit action. */
+#print-letter-root{display:none}
+@page{size:A4;margin:16mm}
+@media print{
+ html,body{background:#fff!important;color:#111!important;min-height:auto!important;margin:0!important;padding:0!important}
+ body>*:not(#print-letter-root){display:none!important}
+ #print-letter-root{display:block!important;position:static!important;visibility:visible!important;background:#fff!important;color:#111!important;width:100%!important;margin:0!important;padding:0!important}
+ .print-letter{display:block!important;visibility:visible!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important;border:0!important;box-shadow:none!important;font-family:Georgia,"Times New Roman",serif!important;font-size:11.5pt!important;line-height:1.65!important;overflow:visible!important}
+ .print-letter *{visibility:visible!important;box-shadow:none!important;text-shadow:none!important}
+ .print-letter .letter-head{text-align:center;border-bottom:2px solid #1d6842;padding:0 0 13px;margin:0 0 18px}
+ .print-letter .letter-head img{display:block;width:92px;height:70px;object-fit:contain;margin:0 auto 8px}
+ .print-letter .letter-head strong{display:block;font:800 15pt/1.25 Arial,sans-serif;color:#123d2b;margin-bottom:4px}
+ .print-letter .letter-head span{display:block;font:10pt Arial,sans-serif;color:#45564a}
+ .print-letter h2{text-align:center;text-transform:uppercase;font:bold 15pt/1.3 Arial,sans-serif;letter-spacing:.3px;margin:24px 0 18px;color:#123d2b;break-after:avoid}
+ .print-letter p{margin:11px 0;color:#171717!important;orphans:3;widows:3}
+ .print-letter .meta{border-top:1px solid #bbcaba;padding-top:10px;margin-top:26px;text-align:center;color:#5d695e;font-size:9pt}
+ a{color:inherit!important;text-decoration:none!important}
+}
+
 </style>
 </head>
 <body>
@@ -95,7 +114,7 @@ footer p{margin:4px 0 0;color:#b8cabe}
 <div class="stamp" id="result-updated"></div>
 <div class="timeline" id="timeline"></div>
 <div class="final-note" id="status-guidance" style="margin-top:20px;background:#f2f7ed;border:1px solid #e0ebd8;border-radius:9px;padding:13px;color:#455b45;font-size:11px;line-height:1.65"></div>
-<div class="result-actions"><button class="button secondary" id="check-again" type="button">Check another status</button><a class="button" href="/">Register another application</a></div>
+<div class="result-actions"><button class="button" id="print-letter-button" type="button" hidden>Print acceptance letter <span aria-hidden="true">↗</span></button><button class="button secondary" id="check-again" type="button">Check another status</button><a class="button" href="/">Register another application</a></div>
 </section>
 </section>
 <aside class="side">
@@ -105,6 +124,7 @@ footer p{margin:4px 0 0;color:#b8cabe}
 </aside>
 </main>
 <footer><div class="shell"><strong>Agrolyst Integrated Farms and Services</strong><p>Market to Farm. Empowering Farmers. Growing the Future.</p></div></footer>
+<div id="print-letter-root" aria-hidden="true"></div>
 <script type="module">
 const endpoint="https://orhlccyodjuhwoaelmyd.supabase.co/functions/v1/public-siwes-applications";
 const apiKey="sb_publishable_3HEzwj5aGJx3VOQD7l8jwQ_MngS3dcK";
@@ -112,12 +132,44 @@ const form=document.getElementById("status-form");
 const message=document.getElementById("message");
 const button=document.getElementById("check-button");
 const result=document.getElementById("result");
+const printButton=document.getElementById("print-letter-button");
+const printRoot=document.getElementById("print-letter-root");
+let printInProgress=false;
 function showMessage(text,error=false){message.textContent=text;message.className="message show"+(error?" error":"");}
 function formatDate(value){if(!value)return "";const date=new Date(value);if(Number.isNaN(date.getTime()))return "";return new Intl.DateTimeFormat("en-NG",{dateStyle:"medium",timeStyle:"short"}).format(date);}
 function labelFor(status){const map={compliance_incomplete:"Application in progress",under_review:"Under Review",changes_requested:"Changes requested",approved:"Approved",rejected:"Not approved",acceptance_letter_issued:"Acceptance letter issued",resumption_confirmed:"Resumption confirmed",training_in_progress:"Training in progress",completed:"Completed"};return map[status]||"Status updated";}
-function guidanceFor(status){const map={compliance_incomplete:"Your application record is not yet complete. Sign in to the applicant portal or contact Agrolyst for next steps.",under_review:"Your application has been received and is waiting for review. Please check again later for updates.",changes_requested:"The review team has requested changes or additional information. Please sign in to your applicant account or contact Agrolyst for instructions.",approved:"Your application has been approved. Please follow any next-step instructions provided by Agrolyst.",rejected:"A decision has been recorded for this application. Contact Agrolyst through its official channels if you need clarification.",acceptance_letter_issued:"Your acceptance letter has been officially issued. Sign in to the applicant portal with the email linked to your application to view available documents.",resumption_confirmed:"Your resumption has been confirmed. Follow the instructions issued by the Agrolyst team.",training_in_progress:"Your industrial training is marked as in progress. Follow the instructions and reporting requirements shared by Agrolyst.",completed:"Your SIWES training is marked as completed. Contact Agrolyst if you need help with completion documentation."};return map[status]||"Please contact Agrolyst through its official channels for clarification.";}
+function guidanceFor(status){const map={compliance_incomplete:"Your application record is not yet complete. Sign in to the applicant portal or contact Agrolyst for next steps.",under_review:"Your application has been received and is waiting for review. Please check again later for updates.",changes_requested:"The review team has requested changes or additional information. Please sign in to your applicant account or contact Agrolyst for instructions.",approved:"Your application has been approved. Please follow any next-step instructions provided by Agrolyst.",rejected:"A decision has been recorded for this application. Contact Agrolyst through its official channels if you need clarification.",acceptance_letter_issued:"Your acceptance letter has been officially issued. To view the letter, press Print acceptance letter. The complete document is prepared only in your browser print preview.",resumption_confirmed:"Your resumption has been confirmed. Follow the instructions issued by the Agrolyst team.",training_in_progress:"Your industrial training is marked as in progress. Follow the instructions and reporting requirements shared by Agrolyst.",completed:"Your SIWES training is marked as completed. Contact Agrolyst if you need help with completion documentation."};return map[status]||"Please contact Agrolyst through its official channels for clarification.";}
 function renderTimeline(app){const status=app.status;const states={compliance_incomplete:0,under_review:1,changes_requested:1,approved:2,rejected:2,acceptance_letter_issued:2,resumption_confirmed:3,training_in_progress:3,completed:4};const active=states[status]??1;const terminal=status==="rejected"||status==="completed";const stages=[{title:"Application submitted",desc:"Your application has been recorded.",date:app.submitted_at},{title:"Application review",desc:status==="changes_requested"?"The review team has requested further information.":status==="under_review"?"Your application is waiting for review.":"The application review stage has been updated.",date:app.reviewed_at},{title:"Decision",desc:status==="rejected"?"A decision has been recorded.":status==="approved"?"Your application is approved.":status==="acceptance_letter_issued"?"Your acceptance letter has been issued.":"The final decision will appear here when updated.",date:app.acceptance_letter_issued_at},{title:"Training progress",desc:status==="resumption_confirmed"?"Resumption has been confirmed.":status==="training_in_progress"?"Your SIWES training is in progress.":status==="completed"?"Your training has been marked completed.":"This stage is shown when relevant to your application.",date:app.updated_at},{title:"Training completed",desc:status==="completed"?"Your SIWES application is marked completed.":"Completion will be shown here when your training is finished.",date:app.completed_at}];const target=document.getElementById("timeline");target.innerHTML="";stages.forEach((stage,index)=>{const item=document.createElement("div");item.className="stage";let done=index<active||(status==="completed"&&index===4)||(status==="rejected"&&index<=1);const isActive=!done&&index===active&&!terminal;if(done)item.classList.add("done");if(isActive)item.classList.add("active");const mark=document.createElement("span");mark.className="stage-mark";mark.textContent=done?"✓":String(index+1);const content=document.createElement("div");const title=document.createElement("strong");title.textContent=stage.title;const desc=document.createElement("p");desc.textContent=stage.desc;content.append(title,desc);const date=formatDate(stage.date);if(date){const stamp=document.createElement("div");stamp.className="stamp";stamp.textContent=date;content.append(stamp);}item.append(mark,content);target.append(item);});}
-form.addEventListener("submit",async event=>{event.preventDefault();message.className="message";result.hidden=true;const reference_no=document.getElementById("reference_no").value.trim().toUpperCase();const email=document.getElementById("email").value.trim();if(!reference_no||!email){showMessage("Enter both your Application ID and application email.",true);return;}button.disabled=true;button.textContent="Checking status…";try{const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json","apikey":apiKey},body:JSON.stringify({action:"check-status",reference_no,email})});let data={};try{data=await response.json();}catch{}if(!response.ok||!data.ok||!data.application){throw new Error(data.error||"We could not check the status right now.");}const app=data.application;document.getElementById("result-reference").textContent=app.reference_no;const badge=document.getElementById("result-badge");badge.textContent=labelFor(app.status);badge.className="badge"+(["approved","acceptance_letter_issued","resumption_confirmed","training_in_progress","completed"].includes(app.status)?" green":app.status==="rejected"?" red":"");document.getElementById("result-updated").textContent=app.updated_at?"Last updated "+formatDate(app.updated_at):app.submitted_at?"Submitted "+formatDate(app.submitted_at):"";renderTimeline(app);document.getElementById("status-guidance").textContent=guidanceFor(app.status);result.hidden=false;showMessage("Application record found. Here is the latest status available.",false);result.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});}catch(error){showMessage(error instanceof Error?error.message:"We could not check the status right now. Please try again.",true);}finally{button.disabled=false;button.innerHTML='Check status <span aria-hidden="true">→</span>'; }});
+form.addEventListener("submit",async event=>{event.preventDefault();message.className="message";result.hidden=true;const reference_no=document.getElementById("reference_no").value.trim().toUpperCase();const email=document.getElementById("email").value.trim();if(!reference_no||!email){showMessage("Enter both your Application ID and application email.",true);return;}button.disabled=true;button.textContent="Checking status…";try{const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json","apikey":apiKey},body:JSON.stringify({action:"check-status",reference_no,email})});let data={};try{data=await response.json();}catch{}if(!response.ok||!data.ok||!data.application){throw new Error(data.error||"We could not check the status right now.");}const app=data.application;document.getElementById("result-reference").textContent=app.reference_no;const badge=document.getElementById("result-badge");badge.textContent=labelFor(app.status);badge.className="badge"+(["approved","acceptance_letter_issued","resumption_confirmed","training_in_progress","completed"].includes(app.status)?" green":app.status==="rejected"?" red":"");document.getElementById("result-updated").textContent=app.updated_at?"Last updated "+formatDate(app.updated_at):app.submitted_at?"Submitted "+formatDate(app.submitted_at):"";renderTimeline(app);document.getElementById("status-guidance").textContent=guidanceFor(app.status);printButton.hidden=app.status!=="acceptance_letter_issued";result.hidden=false;showMessage("Application record found. Here is the latest status available.",false);result.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});}catch(error){showMessage(error instanceof Error?error.message:"We could not check the status right now. Please try again.",true);}finally{button.disabled=false;button.innerHTML='Check status <span aria-hidden="true">→</span>'; }});
+async function printAcceptanceLetter(){
+ if(printInProgress)return;
+ const reference_no=document.getElementById("reference_no").value.trim().toUpperCase();
+ const email=document.getElementById("email").value.trim();
+ printInProgress=true;printButton.disabled=true;printButton.textContent="Preparing acceptance letter…";
+ try{
+  const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json","apikey":apiKey},body:JSON.stringify({action:"print-acceptance-letter",reference_no,email})});
+  let data={};try{data=await response.json();}catch{}
+  if(!response.ok||!data.ok||!data.letter?.html)throw new Error(data.error||"The acceptance letter is not available for printing yet.");
+  // The entire letter is inserted into a print-only container: it stays hidden in normal page view.
+  const article=document.createElement("article");article.className="print-letter";article.innerHTML=data.letter.html;
+  printRoot.replaceChildren(article);
+  const logo=article.querySelector(".letter-head img");
+  if(logo&&!logo.complete){await Promise.race([new Promise(resolve=>{logo.addEventListener("load",resolve,{once:true});logo.addEventListener("error",resolve,{once:true});}),new Promise(resolve=>setTimeout(resolve,1500))]);}
+  const clearPrintContent=()=>{printRoot.replaceChildren();window.removeEventListener("afterprint",clearPrintContent);};
+  window.addEventListener("afterprint",clearPrintContent,{once:true});
+  // Give the print stylesheet a frame to apply before opening the native print dialog.
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  window.print();
+  showMessage("The acceptance letter was prepared for printing. Choose a printer or Save as PDF in the print dialog.",false);
+ }catch(error){
+  printRoot.replaceChildren();
+  showMessage(error instanceof Error?error.message:"We could not prepare the acceptance letter. Please try again.",true);
+ }finally{
+  printInProgress=false;printButton.disabled=false;printButton.innerHTML='Print acceptance letter <span aria-hidden="true">↗</span>';
+ }
+}
+printButton.addEventListener("click",printAcceptanceLetter);
+window.addEventListener("afterprint",()=>{printRoot.replaceChildren();});
 document.getElementById("check-again").addEventListener("click",()=>{result.hidden=true;message.className="message";document.getElementById("reference_no").focus();});
 const params=new URLSearchParams(location.search);if(params.get("id"))document.getElementById("reference_no").value=params.get("id").toUpperCase();
 </script>
