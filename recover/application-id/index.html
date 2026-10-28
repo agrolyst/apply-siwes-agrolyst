@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123d2b">
+<meta name="description" content="Recover a lost Agrolyst SIWES Application ID using the email address or phone number provided with the application.">
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png">
+<link rel="shortcut icon" type="image/png" href="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png">
+<title>Recover Application ID | Agrolyst SIWES</title>
+<style>
+:root{color-scheme:light;--forest:#123d2b;--green:#1e6842;--lime:#d4e76a;--ink:#18281f;--muted:#68756b;--line:#dce5d9;--paper:#f4f7f0}
+*{box-sizing:border-box}html{min-height:100%;scroll-behavior:smooth}
+body{margin:0;min-height:100vh;color:var(--ink);font:15px/1.6 "DM Sans",Inter,system-ui,sans-serif;background:radial-gradient(ellipse at 8% 12%,#e6efe0 0,transparent 26rem),radial-gradient(ellipse at 96% 89%,#e6eee1 0,transparent 28rem),var(--paper);-webkit-font-smoothing:antialiased}
+a{color:inherit}button,input,select{font:inherit}.shell{width:min(1060px,calc(100% - 32px));margin:auto}
+header{background:#ffffffdf;border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:76px}
+.brand{display:flex;align-items:center;gap:12px;color:var(--forest);text-decoration:none;font-size:14px;font-weight:900;letter-spacing:1px}
+.brand img{display:block;width:65px;height:48px;object-fit:contain}.brand small{display:block;margin-top:3px;color:var(--muted);font-size:8px;letter-spacing:1.35px}
+.nav-link{border:1px solid #dce8d7;background:#f1f6ee;color:var(--forest);border-radius:999px;padding:9px 14px;font-size:11px;font-weight:850;text-decoration:none}
+.hero{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(120deg,#0d3021,#185637 58%,#24734a);color:white;padding:53px 0 78px}
+.hero:after{content:"";position:absolute;z-index:-1;right:-145px;top:-255px;width:500px;height:500px;border:1px solid #ffffff20;transform:rotate(38deg);box-shadow:0 0 0 32px #ffffff04,0 0 0 66px #ffffff04}
+.kicker{display:flex;align-items:center;gap:9px;color:var(--lime);font-size:10px;letter-spacing:1.8px;font-weight:900;text-transform:uppercase}
+.dot{width:7px;height:7px;display:block;background:var(--lime);border-radius:50%;box-shadow:0 0 0 5px #d4e76a20}
+h1{max-width:700px;margin:13px 0 12px;font-size:clamp(33px,5vw,51px);line-height:1.06;letter-spacing:-1.9px}
+.hero p{max-width:680px;margin:0;color:#dcebe0;font-size:14px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:22px;align-items:start;margin-top:-29px;padding-bottom:62px;position:relative;z-index:1}
+.card{background:#fff;border:1px solid #dfe8dc;border-radius:17px;padding:clamp(20px,3vw,30px);box-shadow:0 18px 50px #123d2b0e}
+h2{margin:0 0 7px;font-size:22px;line-height:1.2;letter-spacing:-.6px;color:var(--forest)}
+.muted{margin:0 0 22px;color:var(--muted);font-size:12px}
+.method-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 22px}
+.method-choice{display:flex;align-items:center;gap:9px;border:1px solid #dfe7dc;border-radius:10px;padding:13px;background:#fff;color:#526254;cursor:pointer;transition:border .18s,background .18s}
+.method-choice:has(input:checked){border-color:#8eae83;background:#f0f7ec;color:var(--forest);box-shadow:0 0 0 3px #1e68440a}
+.method-choice input{accent-color:var(--green);margin:0}
+.method-choice svg{width:19px;height:19px;flex:0 0 auto;color:var(--green)}
+.method-choice strong{display:block;font-size:11px}.method-choice small{display:block;font-size:9px;color:var(--muted);margin-top:2px}
+.field{display:flex;flex-direction:column;gap:7px;margin-bottom:17px}
+.field label{font-size:11px;font-weight:850;color:#34483a}
+.field input{width:100%;min-height:49px;border:1px solid #ced9cb;border-radius:9px;background:#fbfdf9;padding:12px 13px;color:var(--ink);outline:none;transition:border .18s,box-shadow .18s}
+.field input:focus{border-color:var(--green);box-shadow:0 0 0 4px #1e684415;background:white}
+.help{font-size:10px;color:#7d897d;line-height:1.5}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:47px;padding:12px 17px;border:0;border-radius:9px;background:linear-gradient(110deg,#155334,#1e6842);color:#fff;font-size:12px;font-weight:850;text-decoration:none;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.button:hover{transform:translateY(-1px);box-shadow:0 9px 20px #123d2b20}.button:disabled{opacity:.6;cursor:wait;transform:none;box-shadow:none}.button.secondary{background:white;border:1px solid var(--line);color:var(--forest)}.button.full{width:100%}
+.message{display:none;border-radius:9px;margin:14px 0;padding:12px 14px;font-size:12px;line-height:1.6;background:#eaf4e7;color:#194d2e;border:1px solid #d8e9d2}
+.message.show{display:block}.message.error{background:#fff0ed;color:#a12c1e;border-color:#f3d0c8}
+.side{display:grid;gap:14px}.side .card{padding:21px;box-shadow:0 12px 32px #123d2b08}
+.side h3{font-size:14px;letter-spacing:-.2px;color:var(--forest);margin:0 0 10px}.side p,.side li{color:var(--muted);font-size:11px;line-height:1.7}.side ul{padding-left:17px;margin:0}.side li{margin:6px 0}
+.trust-icon{width:40px;height:40px;display:grid;place-items:center;background:#edf4e9;color:var(--green);border-radius:12px;margin-bottom:14px}.trust-icon svg{width:21px;height:21px}
+footer{background:#102f22;color:#dce9df;padding:23px 0;font-size:11px}footer p{margin:4px 0 0;color:#b8cabe}
+[hidden]{display:none!important}
+@media(max-width:780px){.main{grid-template-columns:1fr;margin-top:-25px}.side{grid-template-columns:1fr 1fr}.hero{padding:45px 0 65px}}
+@media(max-width:540px){.nav{min-height:67px}.brand img{width:52px;height:42px}.brand{font-size:12px}.brand small{font-size:7px}.nav-link{padding:8px 10px;font-size:10px}.hero{padding:36px 0 57px}h1{letter-spacing:-1.2px}.side{grid-template-columns:1fr}.main{padding-bottom:45px}.method-tabs{gap:6px}.method-choice{padding:10px 8px;gap:6px}.method-choice strong{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header><div class="shell nav"><a class="brand" href="/" aria-label="Agrolyst SIWES home"><img src="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png" alt="Agrolyst Farms logo"><span>AGROLYST<small>SIWES APPLICATION PORTAL</small></span></a><a class="nav-link" href="/check/status/">Check status</a></div></header>
+<section class="hero"><div class="shell"><div class="kicker"><span class="dot"></span> Applicant help desk</div><h1>Forgot your Application ID?</h1><p>Recover your SIWES Application ID using the email address or phone number you provided when applying. We’ll send the ID to that contact if it matches a submitted application.</p></div></section>
+<main class="shell main">
+<section class="card">
+<div class="trust-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div>
+<h2>Recover your application reference</h2><p class="muted">Choose a recovery method and enter the same contact detail used on your application.</p>
+<div id="message" class="message" role="status" aria-live="polite"></div>
+<form id="recovery-form">
+<div class="method-tabs" role="radiogroup" aria-label="Recovery method">
+<label class="method-choice"><input type="radio" name="channel" value="email" checked><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span><strong>Email address</strong><small>Receive your ID by email</small></span></label>
+<label class="method-choice"><input type="radio" name="channel" value="phone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 11.2 19a19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/></svg><span><strong>Phone number</strong><small>Receive your ID by SMS</small></span></label>
+</div>
+<div class="field" id="email-field"><label for="email">Application email address</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="Enter the email used to apply"><span class="help">Use the same inbox from your original SIWES application.</span></div>
+<div class="field" id="phone-field" hidden><label for="phone">Phone number with country code</label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" placeholder="+234 801 234 5678" aria-describedby="phone-help"><span class="help" id="phone-help">Include the international country calling code, such as +234 for Nigeria.</span></div>
+<button class="button full" id="send-button" type="submit">Send my Application ID <span aria-hidden="true">→</span></button>
+<p class="help" style="margin-top:12px">For your privacy, this page will not display an Application ID directly. Recovery details are sent only to the matching contact method.</p>
+</form>
+<div id="follow-up" hidden style="margin-top:19px;padding-top:17px;border-top:1px solid #e8eee5"><p class="help" style="margin-bottom:12px">After receiving your ID, use it to check your application status.</p><div style="display:flex;flex-wrap:wrap;gap:9px"><a class="button" href="/check/status/">Check application status</a><a class="button secondary" href="/">Return to application</a></div></div>
+</section>
+<aside class="side">
+<div class="card"><h3>How recovery works</h3><ul><li>Choose email or phone.</li><li>Enter the contact detail used on your application.</li><li>If it matches a submitted application, the Application ID is sent privately to you.</li><li>Open the status page and use your Application ID with your email to view updates.</li></ul></div>
+<div class="card"><h3>Keep your details safe</h3><p>Never share an Application ID, verification code or private application documents publicly. If you no longer have access to your original email or phone number, contact Agrolyst for identity verification.</p></div>
+<div class="card"><h3>Already found your ID?</h3><p>Go straight to the status checker to see your latest application progress.</p><a href="/check/status/" class="button secondary">Check status →</a></div>
+</aside>
+</main>
+<footer><div class="shell"><strong>Agrolyst Integrated Farms and Services</strong><p>Market to Farm. Empowering Farmers. Growing the Future.</p></div></footer>
+<script type="module">
+const FUNCTION_URL="https://orhlccyodjuhwoaelmyd.supabase.co/functions/v1/public-siwes-applications";
+const API_KEY="sb_publishable_3HEzwj5aGJx3VOQD7l8jwQ_MngS3dcK";
+const form=document.getElementById("recovery-form");
+const message=document.getElementById("message");
+const button=document.getElementById("send-button");
+const emailField=document.getElementById("email-field");
+const phoneField=document.getElementById("phone-field");
+const emailInput=document.getElementById("email");
+const phoneInput=document.getElementById("phone");
+const followUp=document.getElementById("follow-up");
+function selectedChannel(){return form.querySelector('input[name="channel"]:checked')?.value||"email";}
+function renderChannel(){const emailMode=selectedChannel()==="email";emailField.hidden=!emailMode;phoneField.hidden=emailMode;emailInput.required=emailMode;phoneInput.required=!emailMode;message.className="message";followUp.hidden=true;}
+function showMessage(text,error=false){message.textContent=text;message.className="message show"+(error?" error":"");}
+form.querySelectorAll('input[name="channel"]').forEach(input=>input.addEventListener("change",renderChannel));
+form.addEventListener("submit",async event=>{
+ event.preventDefault();message.className="message";followUp.hidden=true;
+ const channel=selectedChannel();
+ const email=emailInput.value.trim().toLowerCase();
+ const phone=phoneInput.value.trim();
+ if(channel==="email"&&!emailInput.checkValidity()){emailInput.reportValidity();return;}
+ if(channel==="phone"&&!phone){phoneInput.reportValidity();return;}
+ button.disabled=true;button.textContent="Requesting recovery…";
+ try{
+  const response=await fetch(FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":API_KEY},body:JSON.stringify({action:"recover-application-id",channel,email:channel==="email"?email:undefined,phone:channel==="phone"?phone:undefined})});
+  const payload=await response.json().catch(()=>({}));
+  if(!response.ok||!payload.ok)throw new Error(payload.error||"Application ID recovery is unavailable right now.");
+  showMessage(payload.message||"If a submitted application matches those details, recovery instructions will be sent to that contact.");
+  followUp.hidden=false;
+ }catch(error){showMessage(error instanceof Error?error.message:"We could not request recovery right now. Please try again later.",true);}
+ finally{button.disabled=false;button.innerHTML='Send my Application ID <span aria-hidden="true">→</span>';}
+});
+renderChannel();
+</script>
+</body>
+</html>
