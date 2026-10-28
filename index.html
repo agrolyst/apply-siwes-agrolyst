@@ -8,8 +8,8 @@
 <link rel="shortcut icon" type="image/png" href="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png">
 <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png">
 <meta name="description" content="Apply for the Agrolyst SIWES programme without creating an account.">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.0/dist/css/intlTelInput.css">
-<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.0/dist/js/intlTelInput.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.7/dist/css/intlTelInput.css">
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.7/dist/js/intlTelInput.min.js"></script>
 <title>Apply for SIWES | Agrolyst</title>
 <style>
 :root{--forest:#123d2b;--green:#1e6842;--lime:#d4e76a;--ink:#18281f;--muted:#68756b;--line:#dce5d9;--paper:#f4f7f0;--white:#fff;--soft:#edf4e9;--gold:#e9bf61}
@@ -358,7 +358,7 @@ if(phoneInput&&typeof window.intlTelInput==="function"){
   strictMode:true,
   formatAsYouType:true,
   useFullscreenPopup:true,
-  loadUtils:()=>import("https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.0/dist/js/utils.js")
+  loadUtils:()=>import("https://cdn.jsdelivr.net/npm/intl-tel-input@29.5.7/dist/js/utils.js")
  });
  phoneUtilsReady=phoneIti.promise.then(()=>{phoneHint.textContent="Use an active number you own and can answer. Your number is checked for validity and duplicate applications when you continue.";return true;}).catch(error=>{console.warn("Phone validation utilities did not load.",error);phoneHint.textContent="We could not load phone validation. Refresh the page before submitting so your number can be checked properly.";return false;});
  phoneInput.addEventListener("input",()=>{phoneInput.setCustomValidity("");phoneHint.classList.remove("phone-invalid");saveDraft();});
@@ -410,8 +410,8 @@ form.addEventListener("submit",async event=>{
  if(!document.getElementById("privacy_ack").checked){showMessage("Please acknowledge the application privacy notice before submitting.",true);return;}
  if(!policyAccepted){openPolicy();showMessage("Please read and accept the Applicant Policy before submitting.",true);return;}
  const application=Object.fromEntries(new FormData(form).entries());
- if(!await checkEmailAvailability()){goToStep(0);document.getElementById("email").focus();return;}
- if(!await checkPhoneAvailability()){goToStep(0);phoneInput.focus();return;}
+ if(!await checkEmailAvailability()){const reason=document.getElementById("email").validationMessage||"We could not verify this email address. Please try again.";goToStep(0);showMessage(reason,true);document.getElementById("email").reportValidity();document.getElementById("email").focus();return;}
+ if(!await checkPhoneAvailability()){const reason=phoneInput.validationMessage||message.textContent||"We could not verify this phone number. Please try again.";goToStep(0);showMessage(reason,true);phoneInput.reportValidity();phoneInput.focus();return;}
  application.phone=phoneIti.getNumber();
  isSubmitting=true;submit.disabled=true;submit.textContent="Submitting application…";
  try{
