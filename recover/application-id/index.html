@@ -52,15 +52,24 @@ footer{background:#102f22;color:#dce9df;padding:23px 0;font-size:11px}footer p{m
 @media(max-width:780px){.main{grid-template-columns:1fr;margin-top:-25px}.side{grid-template-columns:1fr 1fr}.hero{padding:45px 0 65px}}
 @media(max-width:540px){.nav{min-height:67px}.brand img{width:52px;height:42px}.brand{font-size:12px}.brand small{font-size:7px}.nav-link{padding:8px 10px;font-size:10px}.hero{padding:36px 0 57px}h1{letter-spacing:-1.2px}.side{grid-template-columns:1fr}.main{padding-bottom:45px}.method-tabs{gap:6px}.method-choice{padding:10px 8px;gap:6px}.method-choice strong{font-size:10px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+.recovered-card{border:1px solid #dfe8dc;border-radius:11px;padding:15px;margin:11px 0;background:#fbfdf9}
+.recovered-label{font-size:9px;color:#788778;font-weight:900;letter-spacing:1.3px;text-transform:uppercase}
+.recovered-id{font-size:16px;line-height:1.4;color:var(--forest);font-weight:950;overflow-wrap:anywhere;margin:4px 0 8px}
+.recovered-meta{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;font-size:10px;color:var(--muted)}
+.recovered-pill{border:1px solid #e7ddb6;background:#fff3d7;color:#7b5b1c;padding:5px 8px;border-radius:999px;font-size:9px;font-weight:900}
+.recovered-pill.green{border-color:#d2e8ca;background:#e8f4e4;color:#215b36}
+.code-input{text-align:center;font-size:20px;font-weight:900;letter-spacing:7px}
+
 </style>
 </head>
 <body>
 <header><div class="shell nav"><a class="brand" href="/" aria-label="Agrolyst SIWES home"><img src="https://raw.githubusercontent.com/agrolyst/siwes-agrolyst/main/agrolystfarmslogo.png" alt="Agrolyst Farms logo"><span>AGROLYST<small>SIWES APPLICATION PORTAL</small></span></a><a class="nav-link" href="/check/status/">Check status</a></div></header>
-<section class="hero"><div class="shell"><div class="kicker"><span class="dot"></span> Applicant help desk</div><h1>Forgot your Application ID?</h1><p>Recover your SIWES Application ID using the email address or phone number you provided when applying. We’ll send the ID to that contact if it matches a submitted application.</p></div></section>
+<section class="hero"><div class="shell"><div class="kicker"><span class="dot"></span> Applicant help desk</div><h1>Forgot your Application ID?</h1><p>Recover your SIWES Application ID using the email address or phone number you provided when applying. We’ll send a one-time verification code if it matches a submitted application. After you verify that code, your Application ID will be displayed securely.</p></div></section>
 <main class="shell main">
 <section class="card">
 <div class="trust-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div>
-<h2>Recover your application reference</h2><p class="muted">Choose a recovery method and enter the same contact detail used on your application.</p>
+<h2>Recover your application reference</h2><p class="muted">Choose a recovery method, verify that you own the contact, and then retrieve your reference.</p>
 <div id="message" class="message" role="status" aria-live="polite"></div>
 <form id="recovery-form">
 <div class="method-tabs" role="radiogroup" aria-label="Recovery method">
@@ -69,13 +78,26 @@ footer{background:#102f22;color:#dce9df;padding:23px 0;font-size:11px}footer p{m
 </div>
 <div class="field" id="email-field"><label for="email">Application email address</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="Enter the email used to apply"><span class="help">Use the same inbox from your original SIWES application.</span></div>
 <div class="field" id="phone-field" hidden><label for="phone">Phone number with country code</label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="40" placeholder="+234 801 234 5678" aria-describedby="phone-help"><span class="help" id="phone-help">Include the international country calling code, such as +234 for Nigeria.</span></div>
-<button class="button full" id="send-button" type="submit">Send my Application ID <span aria-hidden="true">→</span></button>
-<p class="help" style="margin-top:12px">For your privacy, this page will not display an Application ID directly. Recovery details are sent only to the matching contact method.</p>
+<button class="button full" id="send-button" type="submit">Send verification code <span aria-hidden="true">→</span></button>
+<p class="help" style="margin-top:12px">For your privacy, entering contact details alone never reveals an Application ID. The verification code expires after 10 minutes and can only be used once.</p>
 </form>
-<div id="follow-up" hidden style="margin-top:19px;padding-top:17px;border-top:1px solid #e8eee5"><p class="help" style="margin-bottom:12px">After receiving your ID, use it to check your application status.</p><div style="display:flex;flex-wrap:wrap;gap:9px"><a class="button" href="/check/status/">Check application status</a><a class="button secondary" href="/">Return to application</a></div></div>
+<section id="verify-panel" hidden style="margin-top:21px;padding-top:20px;border-top:1px solid #e8eee5">
+<h3 style="margin:0 0 6px;color:var(--forest);font-size:16px">Verify your contact</h3>
+<p class="help" id="verify-copy" style="margin:0 0 16px">If an application matches those details, a one-time code has been sent. The code expires in 10 minutes.</p>
+<form id="verify-form">
+<div class="field"><label for="verification-code">Six-digit verification code</label><input id="verification-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="Enter code" required></div>
+<button class="button full" id="verify-button" type="submit">Verify and recover Application ID →</button>
+<div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:10px"><button class="button secondary" id="resend-button" type="button">Send another code</button><button class="button secondary" id="change-contact-button" type="button">Change contact details</button></div>
+</form>
+</section>
+<section id="recovered-results" hidden style="margin-top:21px;padding-top:20px;border-top:1px solid #e8eee5">
+<h2 style="font-size:18px">Recovered Application ID(s)</h2><p class="muted">Keep these references private. You can use the status page to see the latest updates.</p>
+<div id="recovered-list"></div>
+<div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:14px"><a class="button" href="/check/status/">Check application status</a><a class="button secondary" href="/">Register another application</a></div>
+</section>
 </section>
 <aside class="side">
-<div class="card"><h3>How recovery works</h3><ul><li>Choose email or phone.</li><li>Enter the contact detail used on your application.</li><li>If it matches a submitted application, the Application ID is sent privately to you.</li><li>Open the status page and use your Application ID with your email to view updates.</li></ul></div>
+<div class="card"><h3>How recovery works</h3><ul><li>Choose email or phone.</li><li>Enter the contact detail used on your application.</li><li>If it matches a submitted application, a one-time code is sent to that contact.</li><li>Verify the code to display the Application ID.</li><li>Open the status page and use your Application ID with your email to view updates.</li></ul></div>
 <div class="card"><h3>Keep your details safe</h3><p>Never share an Application ID, verification code or private application documents publicly. If you no longer have access to your original email or phone number, contact Agrolyst for identity verification.</p></div>
 <div class="card"><h3>Already found your ID?</h3><p>Go straight to the status checker to see your latest application progress.</p><a href="/check/status/" class="button secondary">Check status →</a></div>
 </aside>
@@ -91,28 +113,30 @@ const emailField=document.getElementById("email-field");
 const phoneField=document.getElementById("phone-field");
 const emailInput=document.getElementById("email");
 const phoneInput=document.getElementById("phone");
-const followUp=document.getElementById("follow-up");
+const verifyPanel=document.getElementById("verify-panel");
+const verifyForm=document.getElementById("verify-form");
+const verifyButton=document.getElementById("verify-button");
+const codeInput=document.getElementById("verification-code");
+const recoveredResults=document.getElementById("recovered-results");
+let challengeId="";
+let activeContactType="email";
+let activeContact="";
+let busy=false;
+
 function selectedChannel(){return form.querySelector('input[name="channel"]:checked')?.value||"email";}
-function renderChannel(){const emailMode=selectedChannel()==="email";emailField.hidden=!emailMode;phoneField.hidden=emailMode;emailInput.required=emailMode;phoneInput.required=!emailMode;message.className="message";followUp.hidden=true;}
-function showMessage(text,error=false){message.textContent=text;message.className="message show"+(error?" error":"");}
+function setMessage(text,error=false){message.textContent=text;message.className="message show"+(error?" error":"");}
+function clearMessage(){message.textContent="";message.className="message";}
+function renderChannel(){const emailMode=selectedChannel()==="email";emailField.hidden=!emailMode;phoneField.hidden=emailMode;emailInput.required=emailMode;phoneInput.required=!emailMode;verifyPanel.hidden=true;recoveredResults.hidden=true;challengeId="";activeContact="";activeContactType=emailMode?"email":"phone";clearMessage();}
 form.querySelectorAll('input[name="channel"]').forEach(input=>input.addEventListener("change",renderChannel));
-form.addEventListener("submit",async event=>{
- event.preventDefault();message.className="message";followUp.hidden=true;
- const channel=selectedChannel();
- const email=emailInput.value.trim().toLowerCase();
- const phone=phoneInput.value.trim();
- if(channel==="email"&&!emailInput.checkValidity()){emailInput.reportValidity();return;}
- if(channel==="phone"&&!phone){phoneInput.reportValidity();return;}
- button.disabled=true;button.textContent="Requesting recovery…";
- try{
-  const response=await fetch(FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":API_KEY},body:JSON.stringify({action:"recover-application-id",channel,email:channel==="email"?email:undefined,phone:channel==="phone"?phone:undefined})});
-  const payload=await response.json().catch(()=>({}));
-  if(!response.ok||!payload.ok)throw new Error(payload.error||"Application ID recovery is unavailable right now.");
-  showMessage(payload.message||"If a submitted application matches those details, recovery instructions will be sent to that contact.");
-  followUp.hidden=false;
- }catch(error){showMessage(error instanceof Error?error.message:"We could not request recovery right now. Please try again later.",true);}
- finally{button.disabled=false;button.innerHTML='Send my Application ID <span aria-hidden="true">→</span>';}
-});
+async function post(payload){const response=await fetch(FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":API_KEY},body:JSON.stringify(payload)});let data={};try{data=await response.json();}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"Recovery is temporarily unavailable. Please try again later.");return data;}
+async function requestCode(){if(busy)return;const type=selectedChannel();const contact=type==="email"?emailInput.value.trim().toLowerCase():phoneInput.value.trim();const control=type==="email"?emailInput:phoneInput;if(!control.checkValidity()){control.reportValidity();return;}busy=true;button.disabled=true;button.textContent="Requesting code…";clearMessage();recoveredResults.hidden=true;try{const data=await post({action:"request-application-id-recovery",contact_type:type,contact});challengeId=data.challenge_id;activeContactType=type;activeContact=contact;if(!challengeId)throw new Error("We could not start the recovery request. Please try again.");verifyPanel.hidden=false;codeInput.value="";document.getElementById("verify-copy").textContent=data.message||"If an application matches those details, a one-time code has been sent. The code expires in 10 minutes.";setMessage("Recovery started for "+(data.masked_contact||"the contact you entered")+". Enter the code if it arrives. For privacy, the service does not confirm whether a matching application exists.");codeInput.focus();}catch(error){setMessage(error instanceof Error?error.message:"We could not request a recovery code.",true);}finally{busy=false;button.disabled=false;button.innerHTML='Send verification code <span aria-hidden="true">→</span>';}}
+form.addEventListener("submit",async event=>{event.preventDefault();await requestCode();});
+document.getElementById("resend-button").addEventListener("click",requestCode);
+document.getElementById("change-contact-button").addEventListener("click",()=>{challengeId="";verifyPanel.hidden=true;clearMessage();(activeContactType==="email"?emailInput:phoneInput).focus();});
+function niceStatus(value){return({"compliance_incomplete":"Application in progress","under_review":"Under Review","changes_requested":"Changes requested","approved":"Approved","rejected":"Not approved","acceptance_letter_issued":"Acceptance letter issued","resumption_confirmed":"Resumption confirmed","training_in_progress":"Training in progress","completed":"Completed"})[value]||"Status updated";}
+function formatDate(value){if(!value)return "";const d=new Date(value);if(Number.isNaN(d.getTime()))return "";return new Intl.DateTimeFormat("en-NG",{dateStyle:"medium"}).format(d);}
+function renderApplications(applications){const list=document.getElementById("recovered-list");list.replaceChildren();applications.forEach(application=>{const card=document.createElement("article");card.className="recovered-card";const label=document.createElement("div");label.className="recovered-label";label.textContent="Application reference";const ref=document.createElement("div");ref.className="recovered-id";ref.textContent=application.reference_no;const meta=document.createElement("div");meta.className="recovered-meta";const badge=document.createElement("span");badge.className="recovered-pill"+(["approved","acceptance_letter_issued","resumption_confirmed","training_in_progress","completed"].includes(application.status)?" green":"");badge.textContent=niceStatus(application.status);const date=document.createElement("span");date.textContent=application.submitted_at?"Submitted "+formatDate(application.submitted_at):"";meta.append(badge,date);const actions=document.createElement("div");actions.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:13px";const copy=document.createElement("button");copy.type="button";copy.className="button secondary";copy.textContent="Copy Application ID";copy.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(application.reference_no);copy.textContent="Copied";}catch{setMessage("Please copy this Application ID manually: "+application.reference_no,true);}});const status=document.createElement("a");status.className="button";status.href="/check/status/?id="+encodeURIComponent(application.reference_no);status.textContent="Check status";actions.append(copy,status);card.append(label,ref,meta,actions);list.append(card);});}
+verifyForm.addEventListener("submit",async event=>{event.preventDefault();if(busy)return;if(!challengeId){setMessage("Please request a new verification code first.",true);return;}if(!codeInput.checkValidity()){codeInput.reportValidity();return;}busy=true;verifyButton.disabled=true;verifyButton.textContent="Verifying…";clearMessage();try{const data=await post({action:"verify-application-id-recovery",challenge_id:challengeId,contact_type:activeContactType,contact:activeContact,code:codeInput.value.trim()});if(!Array.isArray(data.applications)||!data.applications.length)throw new Error("No Application ID was returned. Please contact Agrolyst support.");renderApplications(data.applications);recoveredResults.hidden=false;verifyPanel.hidden=true;setMessage("Contact verified. We recovered "+data.applications.length+" Application ID"+(data.applications.length===1?"":"s")+".");recoveredResults.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});}catch(error){setMessage(error instanceof Error?error.message:"We could not verify this code. Please try again.",true);}finally{busy=false;verifyButton.disabled=false;verifyButton.innerHTML='Verify and recover Application ID →';}});
 renderChannel();
 </script>
 </body>
