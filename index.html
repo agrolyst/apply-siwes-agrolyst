@@ -334,7 +334,8 @@ async function checkPhoneAvailability(){
   return false;
  }
 }
-\nfunction goToStep(index){if(index<0||index>=paneEls.length)return;currentStep=index;paneEls.forEach((pane,i)=>{pane.hidden=i!==index;});[...stepper.children].forEach((item,i)=>{item.classList.toggle("active",i===index);item.classList.toggle("done",i<index);item.setAttribute("aria-current",i===index?"step":"false");});message.classList.add("hidden");if(index===4)renderReview();saveDraft();const top=form.getBoundingClientRect().top+window.scrollY-24;window.scrollTo({top:Math.max(0,top),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});}
+
+function goToStep(index){if(index<0||index>=paneEls.length)return;currentStep=index;paneEls.forEach((pane,i)=>{pane.hidden=i!==index;});[...stepper.children].forEach((item,i)=>{item.classList.toggle("active",i===index);item.classList.toggle("done",i<index);item.setAttribute("aria-current",i===index?"step":"false");});message.classList.add("hidden");if(index===4)renderReview();saveDraft();const top=form.getBoundingClientRect().top+window.scrollY-24;window.scrollTo({top:Math.max(0,top),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});}
 function valueOf(id){if(id==="phone"){const full=phoneIti?.getNumber?.();return full||(document.getElementById("phone")?.value.trim()||"Not provided");}const el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():"Not provided";}
 function renderReview(){const target=document.getElementById("review-summary");target.innerHTML="";const cards=[
  {title:"Personal information",step:0,fields:[["Full name","full_name"],["Email address","email"],["Phone","phone"]]},
