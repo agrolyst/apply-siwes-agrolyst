@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /check/status
+Disallow: /recover/application-id/
+Sitemap: https://applysiwes.agrolystfarms.com/sitemap.xml
