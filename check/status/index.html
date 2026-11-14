@@ -162,7 +162,32 @@ function showMessage(text,error=false){message.textContent=text;message.classNam
 function formatDate(value){if(!value)return "";const date=new Date(value);if(Number.isNaN(date.getTime()))return "";return new Intl.DateTimeFormat("en-NG",{dateStyle:"medium",timeStyle:"short"}).format(date);}
 function labelFor(status){const map={compliance_incomplete:"Application in progress",under_review:"Under Review",changes_requested:"Changes requested",approved:"Approved",rejected:"Rejected",acceptance_letter_issued:"Acceptance letter issued",resumption_confirmed:"Resumption confirmed",training_in_progress:"Training in progress",completed:"Completed"};return map[status]||"Status updated";}
 function guidanceFor(status){const map={compliance_incomplete:"Your application record is not yet complete. Sign in to the applicant portal or contact Agrolyst for next steps.",under_review:"Your application has been received and is waiting for review. Please check again later for updates.",changes_requested:"The review team has requested changes or additional information. Please sign in to your applicant account or contact Agrolyst for instructions.",approved:"Your application has been approved. Please follow any next-step instructions provided by Agrolyst.",rejected:"A decision has been recorded for this application. Contact Agrolyst through its official channels if you need clarification.",acceptance_letter_issued:"Your acceptance letter has been officially issued. To view the letter, press Print acceptance letter. The complete document is prepared only in your browser print preview.",resumption_confirmed:"Your resumption has been confirmed. Follow the instructions issued by the Agrolyst team.",training_in_progress:"Your industrial training is marked as in progress. Follow the instructions and reporting requirements shared by Agrolyst.",completed:"Your SIWES training is marked as completed. Contact Agrolyst if you need help with completion documentation."};return map[status]||"Please contact Agrolyst through its official channels for clarification.";}
-function renderTimeline(app){const status=app.status;const states={compliance_incomplete:0,under_review:1,changes_requested:1,approved:2,rejected:2,acceptance_letter_issued:2,resumption_confirmed:3,training_in_progress:3,completed:4};const active=states[status]??1;const terminal=status==="rejected"||status==="completed";const stages=[{title:"Application submitted",desc:"Your application has been recorded.",date:app.submitted_at},{title:"Application review",desc:status==="changes_requested"?"The review team has requested further information.":status==="under_review"?"Your application is waiting for review.":"The application review stage has been updated.",date:app.reviewed_at},{title:"Decision",desc:status==="rejected"?"A decision has been recorded.":status==="approved"?"Your application is approved.":status==="acceptance_letter_issued"?"Your acceptance letter has been issued.":"The final decision will appear here when updated.",date:app.acceptance_letter_issued_at},{title:"Training progress",desc:status==="resumption_confirmed"?"Resumption has been confirmed.":status==="training_in_progress"?"Your SIWES training is in progress.":status==="completed"?"Your training has been marked completed.":"This stage is shown when relevant to your application.",date:app.updated_at},{title:"Training completed",desc:status==="completed"?"Your SIWES application is marked completed.":"Completion will be shown here when your training is finished.",date:app.completed_at}];const target=document.getElementById("timeline");target.innerHTML="";stages.forEach((stage,index)=>{const item=document.createElement("div");item.className="stage";let done=index<active||(status==="completed"&&index===4)||(status==="rejected"&&index<=1);const isActive=!done&&index===active&&!terminal;if(done)item.classList.add("done");if(isActive)item.classList.add("active");const mark=document.createElement("span");mark.className="stage-mark";mark.textContent=done?"✓":String(index+1);const content=document.createElement("div");const title=document.createElement("strong");title.textContent=stage.title;const desc=document.createElement("p");desc.textContent=stage.desc;content.append(title,desc);const date=formatDate(stage.date);if(date){const stamp=document.createElement("div");stamp.className="stamp";stamp.textContent=date;content.append(stamp);}item.append(mark,content);target.append(item);});}
+function renderTimeline(app){
+ const status=app.status;
+ const stages={
+  compliance_incomplete:{title:"Application submitted",desc:"Your application has been recorded.",date:app.submitted_at},
+  under_review:{title:"Application review",desc:"Your application is currently being reviewed.",date:app.reviewed_at||app.updated_at},
+  changes_requested:{title:"Application review",desc:"Further information has been requested. Please sign in to your applicant portal to see what is needed.",date:app.reviewed_at||app.updated_at},
+  approved:{title:"Decision",desc:"Your application has been approved.",date:app.reviewed_at||app.updated_at},
+  rejected:{title:"Decision",desc:"Your application has been rejected. Please sign in to your applicant portal for further information.",date:app.reviewed_at||app.updated_at},
+  acceptance_letter_issued:{title:"Decision",desc:"Your acceptance letter has been issued.",date:app.acceptance_letter_issued_at||app.updated_at},
+  resumption_confirmed:{title:"Training progress",desc:"Your resumption has been confirmed.",date:app.resumption_confirmed_at||app.updated_at},
+  training_in_progress:{title:"Training progress",desc:"Your SIWES training is currently in progress.",date:app.updated_at},
+  completed:{title:"Training completed",desc:"Your SIWES training has been marked as completed.",date:app.completed_at||app.updated_at}
+ };
+ const stage=stages[status]||stages.compliance_incomplete;
+ const target=document.getElementById("timeline");
+ target.replaceChildren();
+ const item=document.createElement("div");item.className="stage active";
+ const mark=document.createElement("span");mark.className="stage-mark";mark.textContent="•";
+ const content=document.createElement("div");
+ const title=document.createElement("strong");title.textContent=stage.title;
+ const desc=document.createElement("p");desc.textContent=stage.desc;
+ content.append(title,desc);
+ const date=formatDate(stage.date);
+ if(date){const stamp=document.createElement("div");stamp.className="stamp";stamp.textContent=date;content.append(stamp);}
+ item.append(mark,content);target.append(item);
+}
 function renderDocuments(app){
  const panel=document.getElementById("documents-panel");
  const list=document.getElementById("document-list");
