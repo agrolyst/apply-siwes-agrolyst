@@ -80,6 +80,7 @@ input:focus{border-color:var(--green);box-shadow:0 0 0 4px #1e684415;background:
 .document-name{font-size:11px;font-weight:850;color:#34483a}
 .document-state{font-size:10px;font-weight:850;color:#657365;text-align:right}
 .document-state.accepted{color:#267144}.document-state.rejected,.document-state.changes_requested{color:#a33a30}.document-state.pending,.document-state.missing{color:#86621a}
+.document-action{display:inline-flex;align-items:center;justify-content:center;padding:7px 10px;border-radius:7px;background:#1e6842;color:#fff;text-decoration:none;font-size:10px;font-weight:850;white-space:nowrap}.document-row{flex-wrap:wrap}
 .ai-review{margin-top:12px;padding:11px 12px;border-radius:9px;background:#eef4e9;color:#455b45;font-size:11px;line-height:1.6}
 .ai-review strong{color:var(--forest)}
 [hidden]{display:none!important}
@@ -135,7 +136,7 @@ footer p{margin:4px 0 0;color:#b8cabe}
 <div class="ai-review" id="ai-review-status"></div>
 </div>
 <div class="final-note" id="status-guidance" style="margin-top:20px;background:#f2f7ed;border:1px solid #e0ebd8;border-radius:9px;padding:13px;color:#455b45;font-size:11px;line-height:1.65"></div>
-<div class="result-actions"><button class="button" id="print-letter-button" type="button" hidden>Print acceptance letter <span aria-hidden="true">↗</span></button><button class="button secondary" id="check-again" type="button">Check another status</button><a class="button" href="/">Register another application</a></div>
+<div class="result-actions"><a class="button" id="fix-details-button" href="https://siwes.agrolystfarms.com/login/" hidden>Fix application details <span aria-hidden="true">→</span></a><button class="button" id="print-letter-button" type="button" hidden>Print acceptance letter <span aria-hidden="true">↗</span></button><button class="button secondary" id="check-again" type="button">Check another status</button><a class="button" href="/">Register another application</a></div>
 </section>
 </section>
 <aside class="side">
@@ -192,6 +193,7 @@ function renderDocuments(app){
  const panel=document.getElementById("documents-panel");
  const list=document.getElementById("document-list");
  const ai=document.getElementById("ai-review-status");
+ const detailsButton=document.getElementById("fix-details-button");
  list.replaceChildren();
  const docs=Array.isArray(app.documents)?app.documents:[];
  const required=[
@@ -199,22 +201,47 @@ function renderDocuments(app){
   {type:"student_id",label:"Valid Student Identification Card"}
  ];
  const statusLabels={accepted:"Accepted",pending:"Awaiting review",changes_requested:"Changes requested",rejected:"Rejected"};
+ const reference=encodeURIComponent(app.reference_no||"");
+ const email=encodeURIComponent(document.getElementById("email").value.trim());
+ let hasDocumentCorrection=false;
  required.forEach(item=>{
   const matching=docs.filter(doc=>doc.document_type===item.type);
+  const latest=matching.length?matching[matching.length-1]:null;
+  const needsUpload=!latest||["rejected","changes_requested"].includes(latest.status);
+  if(needsUpload)hasDocumentCorrection=true;
   const row=document.createElement("div");row.className="document-row";
   const name=document.createElement("span");name.className="document-name";name.textContent=item.label;
   const state=document.createElement("span");
   const statuses=matching.map(doc=>statusLabels[doc.status]||"Status updated");
-  state.className="document-state "+(matching.length?matching[matching.length-1].status:"missing");
-  state.textContent=matching.length?statuses.join(" · "):"Not uploaded";
-  row.append(name,state);list.append(row);
+  state.className="document-state "+(latest?latest.status:"missing");
+  state.textContent=latest?statuses.join(" · "):"Not uploaded";
+  row.append(name,state);
+  if(needsUpload){
+   const action=document.createElement("a");action.className="document-action";
+   action.href="/check/status/upload/?id="+reference+"&email="+email+"&type="+encodeURIComponent(item.type);
+   action.textContent=latest?"Re-upload document":"Upload document";
+   action.setAttribute("aria-label",(latest?"Replace ":"Upload ")+item.label);
+   row.append(action);
+  }
+  list.append(row);
  });
+ detailsButton.hidden=app.status!=="changes_requested";
+ if(app.status==="changes_requested"){
+  detailsButton.href="https://siwes.agrolystfarms.com/login/";
+  detailsButton.textContent="Fix application details →";
+  detailsButton.setAttribute("aria-label","Sign in to correct application details");
+ }
+ if(hasDocumentCorrection){
+  const hint=document.createElement("p");hint.className="documents-intro";
+  hint.textContent="Use the Upload or Re-upload button beside any missing or returned document. Your existing application will be updated; do not submit a second application.";
+  list.prepend(hint);
+ }
  const review=app.ai_review||{};
  const reviewMessages={
   not_started:"AI document review has not started yet.",
   in_progress:"AI document review is in progress. Check again later for the latest result.",
   completed:"AI document review has finished for the uploaded documents.",
-  needs_attention:"Some AI document checks need attention. Please check your applicant portal for next steps."
+  needs_attention:"Some AI document checks need attention. Review the document checklist and re-upload any item marked for correction."
  };
  const summary=document.createElement("span");
  summary.innerHTML="<strong>AI document review:</strong> ";
