@@ -203,11 +203,12 @@ function renderDocuments(app){
  const statusLabels={accepted:"Accepted",pending:"Awaiting review",changes_requested:"Changes requested",rejected:"Rejected"};
  const reference=encodeURIComponent(app.reference_no||"");
  const email=encodeURIComponent(document.getElementById("email").value.trim());
+ const canUpload=["under_review","compliance_incomplete","changes_requested"].includes(app.status);
  let hasDocumentCorrection=false;
  required.forEach(item=>{
   const matching=docs.filter(doc=>doc.document_type===item.type);
   const latest=matching.length?matching[matching.length-1]:null;
-  const needsUpload=!latest||["rejected","changes_requested"].includes(latest.status);
+  const needsUpload=canUpload&&(!latest||["rejected","changes_requested"].includes(latest.status));
   if(needsUpload)hasDocumentCorrection=true;
   const row=document.createElement("div");row.className="document-row";
   const name=document.createElement("span");name.className="document-name";name.textContent=item.label;
