@@ -164,6 +164,7 @@ async function emailAlreadyUsed(db: ReturnType<typeof createClient>, email: stri
   const { data, error } = await db.from("siwes_applications")
     .select("email")
     .ilike("email", pattern)
+    .neq("status", "rejected")
     .limit(25);
   if (error) throw error;
   return (data ?? []).some((row: { email?: string | null }) =>
@@ -597,6 +598,66 @@ Deno.serve(async (req: Request) => {
     }).slice(0, 5);
 
     return respond(req, 200, { ok: true, suggestions });
+  }
+
+  if (action === "check-reapplication") {
+    const email = clean(body.email, 254).toLowerCase();
+    const rawPhone = clean(body.phone, 40);
+    if (!emailRegex.test(email)) {
+      return respond(req, 400, { ok: false, error: "Enter a valid email address." });
+    }
+    const parsedPhone = parsePhoneNumberFromString(rawPhone);
+    if (!parsedPhone || !parsedPhone.isValid()) {
+      return respond(req, 400, { ok: false, error: "Enter a valid phone number with its country calling code." });
+    }
+    const normalizedPhone = parsedPhone.number;
+    const [emailResult, phoneResult] = await Promise.all([
+      db.from("siwes_applications")
+        .select("id,status,email,phone,reference_no")
+        .eq("email", email)
+        .limit(20),
+      db.from("siwes_applications")
+        .select("id,status,email,phone,reference_no")
+        .eq("phone", normalizedPhone)
+        .limit(20),
+    ]);
+    if (emailResult.error || phoneResult.error) {
+      console.error("Could not check SIWES reapplication eligibility:", emailResult.error?.message ?? phoneResult.error?.message);
+      return respond(req, 500, { ok: false, error: "We could not check your previous application right now. Please try again." });
+    }
+    const matches = new Map<string, { id: string; status: string; email: string; phone: string; reference_no: string }>();
+    for (const row of [...(emailResult.data ?? []), ...(phoneResult.data ?? [])]) {
+      matches.set(row.id, row as { id: string; status: string; email: string; phone: string; reference_no: string });
+    }
+    const rows = [...matches.values()];
+    if (!rows.length) {
+      return respond(req, 200, { ok: true, eligible: true, reason: "new_applicant" });
+    }
+    const active = rows.find((row) => row.status !== "rejected");
+    if (active) {
+      let reason = "An application already exists with these contact details. You cannot submit another application while it is active.";
+      if (active.status === "changes_requested" || active.status === "needs_attention") {
+        reason = "Your previous application needs attention. Please open your existing application and provide the requested corrections instead of applying again.";
+      } else if (active.status === "approved" || active.status === "acceptance_letter_issued") {
+        reason = "Your previous application has been approved. You cannot submit another application with these contact details.";
+      } else if (active.status === "under_review" || active.status === "compliance_incomplete") {
+        reason = "Your previous application is still under review. Please wait for the decision instead of submitting another application.";
+      }
+      return respond(req, 200, { ok: true, eligible: false, status: active.status, reference_no: active.reference_no, error: reason });
+    }
+    const pairedRejected = rows.find((row) =>
+      row.status === "rejected" &&
+      clean(row.email, 254).toLowerCase() === email &&
+      clean(row.phone, 40) === normalizedPhone
+    );
+    if (!pairedRejected) {
+      return respond(req, 200, {
+        ok: true,
+        eligible: false,
+        error: "The email address and phone number do not match the same rejected application. Please use the original pair of contact details.",
+      });
+    }
+    return respond(req, 200, { ok: true, eligible: true, reason: "previous_application_rejected", previous_reference_no: pairedRejected.reference_no });
   }
 
   if (action === "check-email") {
