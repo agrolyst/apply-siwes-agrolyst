@@ -141,7 +141,7 @@ footer p{margin:4px 0 0;color:#b8cabe}
 </section>
 <aside class="side">
 <div class="card"><h3>Where is my Application ID?</h3><p>Your Application ID is shown after your application has been submitted successfully. If you saved a draft but did not complete the final submission, no Application ID has been issued yet.</p></div>
-<div class="card"><h3>Protect your information</h3><ul><li>Use the email address entered on your application.</li><li>Do not share your Application ID publicly.</li><li>This page displays status information only, not private documents or reviewer notes.</li></ul></div>
+<div class="card"><h3>Protect your information</h3><ul><li>Use the email address entered on your application.</li><li>Do not share your Application ID publicly.</li><li>Your application review reasons are shown only after you verify your Application ID and registered email address.</li></ul></div>
 <div class="card"><h3>Need assistance?</h3><p>Contact Agrolyst through its official channels if your ID is lost or you believe your application details are incorrect.</p><a class="button secondary" href="/">Return to application</a></div>
 </aside>
 </main>
@@ -215,6 +215,9 @@ function renderDocuments(app){
   const statuses=matching.map(doc=>statusLabels[doc.status]||"Status updated");
   state.className="document-state "+(latest?latest.status:"missing");
   state.textContent=latest?statuses.join(" · "):"Not uploaded";
+  if(latest?.decision_reason){
+   const reason=document.createElement("p");reason.style.flexBasis="100%";reason.style.margin="2px 0 0";reason.style.color="#7a4d22";reason.style.fontSize="10px";reason.textContent=latest.decision_reason;row.append(reason);
+  }
   row.append(name,state);
   if(needsUpload){
    const action=document.createElement("a");action.className="document-action";
@@ -246,6 +249,16 @@ function renderDocuments(app){
  const summary=document.createElement("span");
  summary.innerHTML="<strong>AI document review:</strong> ";
  const detail=document.createTextNode(reviewMessages[review.status]||"Review status is not available.");
+ const findings=Array.isArray(app.ai_review_details)?app.ai_review_details:[];
+ findings.forEach(item=>{
+  if(!item.summary&&!item.findings?.length)return;
+  const row=document.createElement("div");
+  row.style.marginTop="9px";
+  const title=document.createElement("strong");
+  title.textContent=String(item.document_type||"Document").replaceAll("_"," ")+": ";
+  const textNode=document.createTextNode([item.summary,...(Array.isArray(item.findings)?item.findings:[])].filter(Boolean).join(" "));
+  row.append(title,textNode);summary.append(row);
+ });
  summary.append(detail);
  if(Number(review.total_documents)>0){
   const counts=document.createElement("div");
@@ -255,7 +268,18 @@ function renderDocuments(app){
  ai.replaceChildren(summary);
  panel.hidden=false;
 }
-form.addEventListener("submit",async event=>{event.preventDefault();message.className="message";result.hidden=true;const reference_no=document.getElementById("reference_no").value.trim().toUpperCase();const email=document.getElementById("email").value.trim();if(!reference_no||!email){showMessage("Enter both your Application ID and application email.",true);return;}button.disabled=true;button.textContent="Checking status…";try{const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json","apikey":apiKey},body:JSON.stringify({action:"check-status",reference_no,email})});let data={};try{data=await response.json();}catch{}if(!response.ok||!data.ok||!data.application){throw new Error(data.error||"We could not check the status right now.");}const app=data.application;document.getElementById("result-reference").textContent=app.reference_no;const badge=document.getElementById("result-badge");badge.textContent=labelFor(app.status);badge.className="badge"+(["approved","acceptance_letter_issued","resumption_confirmed","training_in_progress","completed"].includes(app.status)?" green":app.status==="rejected"?" red":"");document.getElementById("result-updated").textContent=app.updated_at?"Last updated "+formatDate(app.updated_at):app.submitted_at?"Submitted "+formatDate(app.submitted_at):"";renderTimeline(app);renderDocuments(app);document.getElementById("status-guidance").textContent=guidanceFor(app.status);const letterIssued=app.status==="acceptance_letter_issued";printButton.hidden=!letterIssued;checkAgainButton.hidden=letterIssued;if(registerAnotherButton)registerAnotherButton.hidden=letterIssued;result.classList.toggle("letter-issued",letterIssued);result.hidden=false;showMessage("Application record found. Here is the latest status available.",false);result.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});}catch(error){showMessage(error instanceof Error?error.message:"We could not check the status right now. Please try again.",true);}finally{button.disabled=false;button.innerHTML='Check status <span aria-hidden="true">→</span>'; }});
+form.addEventListener("submit",async event=>{event.preventDefault();message.className="message";result.hidden=true;const reference_no=document.getElementById("reference_no").value.trim().toUpperCase();const email=document.getElementById("email").value.trim();if(!reference_no||!email){showMessage("Enter both your Application ID and application email.",true);return;}button.disabled=true;button.textContent="Checking status…";try{const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json","apikey":apiKey},body:JSON.stringify({action:"check-status",reference_no,email})});let data={};try{data=await response.json();}catch{}if(!response.ok||!data.ok||!data.application){throw new Error(data.error||"We could not check the status right now.");}const app=data.application;document.getElementById("result-reference").textContent=app.reference_no;const badge=document.getElementById("result-badge");badge.textContent=labelFor(app.status);badge.className="badge"+(["approved","acceptance_letter_issued","resumption_confirmed","training_in_progress","completed"].includes(app.status)?" green":app.status==="rejected"?" red":"");document.getElementById("result-updated").textContent=app.updated_at?"Last updated "+formatDate(app.updated_at):app.submitted_at?"Submitted "+formatDate(app.submitted_at):"";renderTimeline(app);renderDocuments(app);const guidance=document.getElementById("status-guidance");
+const baseGuidance=guidanceFor(app.status);
+const reviewNotes=String(app.review_notes||"").trim();
+guidance.replaceChildren();
+const guidanceTitle=document.createElement("strong");
+guidanceTitle.textContent=app.status==="changes_requested"?"What needs your attention":app.status==="rejected"?"AI review decision and reasons":app.status==="approved"?"AI approval decision":"Application guidance";
+const guidanceText=document.createElement("p");
+guidanceText.style.margin="7px 0 0";
+guidanceText.textContent=reviewNotes||baseGuidance;
+guidance.append(guidanceTitle,guidanceText);
+if(reviewNotes&&app.status!=="changes_requested"&&app.status!=="rejected")guidanceText.textContent=baseGuidance+" "+reviewNotes;
+const letterIssued=app.status==="acceptance_letter_issued";printButton.hidden=!letterIssued;checkAgainButton.hidden=letterIssued;if(registerAnotherButton)registerAnotherButton.hidden=letterIssued;result.classList.toggle("letter-issued",letterIssued);result.hidden=false;showMessage("Application record found. Here is the latest status available.",false);result.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});}catch(error){showMessage(error instanceof Error?error.message:"We could not check the status right now. Please try again.",true);}finally{button.disabled=false;button.innerHTML='Check status <span aria-hidden="true">→</span>'; }});
 async function printAcceptanceLetter(){
  if(printInProgress)return;
  const reference_no=document.getElementById("reference_no").value.trim().toUpperCase();
