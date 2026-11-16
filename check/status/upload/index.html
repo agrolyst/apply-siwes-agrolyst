@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123d2b"><meta name="robots" content="noindex,follow">
+<title>Upload corrected documents | Agrolyst SIWES</title>
+<style>
+:root{--forest:#123d2b;--green:#1e6842;--lime:#d4e76a;--ink:#18281f;--muted:#68756b;--line:#dce5d9;--paper:#f4f7f0}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 8% 12%,#e6efe0 0,transparent 26rem),var(--paper);font:15px/1.6 Inter,system-ui,Arial,sans-serif;color:var(--ink)}
+.shell{width:min(760px,calc(100% - 30px));margin:auto}header{background:#fff;border-bottom:1px solid var(--line)}.nav{display:flex;align-items:center;justify-content:space-between;min-height:72px;gap:12px}.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--forest);font-size:13px;font-weight:900;letter-spacing:1px}.brand img{width:60px;height:48px;object-fit:contain}.brand small{display:block;font-size:8px;color:var(--muted);letter-spacing:1px}
+.hero{background:linear-gradient(120deg,#0d3021,#185637 58%,#24734a);color:white;padding:42px 0 66px}.kicker{color:var(--lime);font-size:10px;letter-spacing:1.6px;font-weight:900;text-transform:uppercase}h1{font-size:clamp(29px,5vw,43px);line-height:1.1;letter-spacing:-1.4px;margin:12px 0}.hero p{max-width:620px;color:#dcebe0;font-size:13px;margin:0}
+main{margin-top:-26px;position:relative;padding-bottom:55px}.card{background:#fff;border:1px solid #dfe8dc;border-radius:16px;padding:clamp(19px,4vw,30px);box-shadow:0 18px 50px #123d2b0e}h2{color:var(--forest);font-size:20px;margin:0 0 5px}.muted{font-size:12px;color:var(--muted);margin:0 0 20px}.field{display:grid;gap:7px;margin:15px 0}label{font-size:11px;font-weight:850;color:#34483a}input,select{width:100%;min-height:47px;border:1px solid #ced9cb;border-radius:9px;background:#fbfdf9;padding:11px 12px;font:inherit;color:var(--ink)}input:focus,select:focus{outline:3px solid #1e684420;border-color:var(--green)}.help{font-size:10px;color:#7d897d}.button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:12px 17px;border:0;border-radius:9px;background:linear-gradient(110deg,#155334,#1e6842);color:white;font-size:12px;font-weight:850;text-decoration:none;cursor:pointer}.button:disabled{opacity:.55;cursor:wait}.button.secondary{background:#fff;border:1px solid var(--line);color:var(--forest)}.full{width:100%}.message{display:none;margin:14px 0;padding:12px 14px;border-radius:9px;font-size:12px;background:#eaf4e7;color:#194d2e;border:1px solid #d8e9d2}.message.show{display:block}.message.error{background:#fff0ed;color:#a12c1e;border-color:#f3d0c8}.notice{padding:12px 14px;background:#f2f7ed;border:1px solid #e0ebd8;border-radius:9px;color:#455b45;font-size:11px;margin:15px 0}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}footer{background:#102f22;color:#dce9df;padding:22px 0;font-size:11px}footer p{margin:3px 0;color:#b8cabe}
+</style>
+</head>
+<body>
+<header><div class="shell nav"><a class="brand" href="/"><img src="/agrolystfarmslogo.png" alt="Agrolyst Farms"><span>AGROLYST<small>SIWES APPLICATION PORTAL</small></span></a><a class="button secondary" href="/check/status/">← Back to status</a></div></header>
+<section class="hero"><div class="shell"><div class="kicker">Applicant correction centre</div><h1>Upload a corrected document.</h1><p>Use this page when your application status asks you to replace a document or provide a missing one. Your Application ID and registered email are used to verify your application.</p></div></section>
+<main class="shell"><section class="card">
+<h2>Submit your replacement document</h2><p class="muted">Choose the document requested in your status checklist, then upload the corrected file.</p>
+<div id="message" class="message" role="status" aria-live="polite"></div>
+<form id="upload-form">
+<div class="field"><label for="reference">Application ID</label><input id="reference" maxlength="50" autocomplete="off" required placeholder="AG-SIWES-XXXXXXXXXX"></div>
+<div class="field"><label for="email">Registered email address</label><input id="email" type="email" maxlength="254" autocomplete="email" required placeholder="Email used on your application"></div>
+<div class="field"><label for="document-type">Document to upload</label><select id="document-type" required>
+<option value="school_introduction_letter">School Letter of Introduction</option><option value="student_id">Student Identification Card</option><option value="cv">Curriculum Vitae (optional)</option><option value="passport_photo">Passport Photograph (optional)</option><option value="other_school_document">Other School Document</option>
+</select></div>
+<div class="field"><label for="file">Choose corrected file</label><input id="file" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required><span class="help">PDF, JPG, JPEG or PNG only. Maximum file size: 10 MB.</span></div>
+<div class="notice">Please upload a clear, complete document. Re-uploading a document adds a new version to your application; it does not delete the earlier submission.</div>
+<button class="button full" id="submit-button" type="submit">Upload document securely</button>
+</form>
+<div class="actions"><a class="button secondary" href="/check/status/">Return to check status</a><a class="button secondary" href="https://siwes.agrolystfarms.com/login/">Fix application details / sign in</a></div>
+</section></main>
+<footer><div class="shell"><strong>Agrolyst Integrated Farms and Services</strong><p>Market to Farm. Empowering Farmers. Growing the Future.</p></div></footer>
+<script>
+const UPLOAD_URL="https://orhlccyodjuhwoaelmyd.supabase.co/functions/v1/siwes-public-document-upload";
+const API_KEY="sb_publishable_3HEzwj5aGJx3VOQD7l8jwQ_MngS3dcK";
+const form=document.getElementById("upload-form"),message=document.getElementById("message"),button=document.getElementById("submit-button");
+function notify(text,error=false){message.textContent=text;message.className="message show"+(error?" error":"");}
+function mimeFor(file){if(file.type==="application/pdf"&&/\.pdf$/i.test(file.name))return "application/pdf";if(file.type==="image/jpeg"&&/\.(jpe?g)$/i.test(file.name))return "image/jpeg";if(file.type==="image/png"&&/\.png$/i.test(file.name))return "image/png";return "";}
+async function callUpload(payload){const response=await fetch(UPLOAD_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":API_KEY},body:JSON.stringify(payload)});let data={};try{data=await response.json();}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"The document upload could not be completed.");return data;}
+form.addEventListener("submit",async event=>{event.preventDefault();message.className="message";const reference_no=document.getElementById("reference").value.trim().toUpperCase(),email=document.getElementById("email").value.trim().toLowerCase(),document_type=document.getElementById("document-type").value,file=document.getElementById("file").files[0];if(!reference_no||!email||!file){notify("Enter your application details and choose a document.",true);return;}if(file.size<1||file.size>10*1024*1024){notify("Choose a file no larger than 10 MB.",true);return;}const mime_type=mimeFor(file);if(!mime_type){notify("Only valid PDF, JPG, JPEG or PNG files are accepted.",true);return;}button.disabled=true;button.textContent="Uploading securely…";try{const base={reference_no,email,document_type,original_filename:file.name,mime_type,file_size_bytes:file.size};const prepared=await callUpload({...base,action:"prepare"});const stored=await fetch(prepared.signed_url,{method:"PUT",headers:{"Content-Type":mime_type,"x-upsert":"false"},body:file});if(!stored.ok)throw new Error("The file could not be transferred to secure storage. Please try again.");await callUpload({reference_no,email,document_type,original_filename:file.name,mime_type,file_size_bytes:file.size,action:"complete",path:prepared.path});notify("Your document has been uploaded and attached to your application. It is now waiting for review. Return to the status page and check again shortly.");form.reset();}catch(error){notify(error instanceof Error?error.message:"Upload failed. Please try again.",true);}finally{button.disabled=false;button.textContent="Upload document securely";}});
+const params=new URLSearchParams(location.search);if(params.get("id"))document.getElementById("reference").value=params.get("id").toUpperCase();if(params.get("email"))document.getElementById("email").value=params.get("email");if(params.get("type")&&[...document.getElementById("document-type").options].some(o=>o.value===params.get("type")))document.getElementById("document-type").value=params.get("type");
+</script>
+</body></html>
