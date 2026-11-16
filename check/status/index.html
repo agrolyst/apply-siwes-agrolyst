@@ -202,7 +202,6 @@ function renderDocuments(app){
  ];
  const statusLabels={accepted:"Accepted",pending:"Awaiting review",changes_requested:"Changes requested",rejected:"Rejected"};
  const reference=encodeURIComponent(app.reference_no||"");
- const email=encodeURIComponent(document.getElementById("email").value.trim());
  const canUpload=["under_review","compliance_incomplete","changes_requested"].includes(app.status);
  let hasDocumentCorrection=false;
  required.forEach(item=>{
@@ -219,7 +218,7 @@ function renderDocuments(app){
   row.append(name,state);
   if(needsUpload){
    const action=document.createElement("a");action.className="document-action";
-   action.href="/check/status/upload/?id="+reference+"&email="+email+"&type="+encodeURIComponent(item.type);
+   action.href="/check/status/upload/?id="+reference+"&type="+encodeURIComponent(item.type);
    action.textContent=latest?"Re-upload document":"Upload document";
    action.setAttribute("aria-label",(latest?"Replace ":"Upload ")+item.label);
    row.append(action);
