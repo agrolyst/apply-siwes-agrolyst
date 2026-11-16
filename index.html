@@ -317,7 +317,7 @@ stepDefs.forEach((def,index)=>{
  }
  const actions=document.createElement("div");actions.className="step-actions";
  const back=document.createElement("button");back.type="button";back.className="btn light";back.textContent="← Back";back.addEventListener("click",()=>goToStep(currentStep-1));if(index===0)back.hidden=true;
- const next=document.createElement("button");next.type=index===5?"submit":"button";next.className="btn";if(index===5)next.id="submit-final";next.textContent=index===5?"Submit application ✓":"Save & Next →";next.addEventListener("click",async event=>{if(index===5)return;event.preventDefault();if(!(await validateStep(index)))return;if(index===0){const previousText=next.textContent;next.disabled=true;next.textContent="Checking email…";const emailAvailable=await checkEmailAvailability();if(!emailAvailable){next.disabled=false;next.textContent=previousText;document.getElementById("email").focus();return;}next.textContent="Checking phone…";const phoneAvailable=await checkPhoneAvailability();next.disabled=false;next.textContent=previousText;if(!phoneAvailable){phoneInput.focus();return;}}saveDraft();goToStep(index+1);});
+ const next=document.createElement("button");next.type=index===5?"submit":"button";next.className="btn";if(index===5)next.id="submit-final";next.textContent=index===5?"Submit application ✓":"Save & Next →";next.addEventListener("click",async event=>{if(index===5)return;event.preventDefault();if(!(await validateStep(index)))return;if(index===0){const previousText=next.textContent;next.disabled=true;next.textContent="Checking email…";const eligible=await checkReapplicationEligibility();next.disabled=false;next.textContent=previousText;if(!eligible){document.getElementById("email").focus();return;}}saveDraft();goToStep(index+1);});
  actions.append(back,next);pane.append(actions);
  const note=document.createElement("div");note.className="draft-note";note.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v5h8V3M8 13h8M8 17h5"/></svg><span>Save &amp; Next saves a draft on this device only. It is not submitted to Agrolyst until the final step.</span>';pane.append(note);
  panes.append(pane);paneEls.push(pane);
@@ -404,6 +404,44 @@ async function checkPhoneAvailability(){
  }
 }
 
+async function checkReapplicationEligibility(){
+ const emailInput=document.getElementById("email");
+ const phoneInput=document.getElementById("phone");
+ const emailValue=emailInput.value.trim().toLowerCase();
+ const ready=await phoneUtilsReady;
+ if(!emailInput.checkValidity()){emailInput.reportValidity();return false;}
+ if(!phoneIti||!ready||!phoneIti.isValidNumber()){
+  showMessage("Enter a valid phone number before checking your application status.",true);
+  phoneInput.focus();return false;
+ }
+ const phone=phoneIti.getNumber();
+ showMessage("Checking your previous application status…",false);
+ try{
+  const response=await fetch(PUBLIC_FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":PUBLIC_API_KEY},body:JSON.stringify({action:"check-reapplication",email:emailValue,phone})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||result.ok!==true||typeof result.eligible!=="boolean"){
+   throw new Error(result.error||"We could not check your previous application. Please try again.");
+  }
+  if(!result.eligible){
+   const reason=result.error||"Your previous application does not allow a new submission.";
+   emailInput.setCustomValidity(reason);
+   showMessage(reason,true);
+   emailInput.focus();
+   return false;
+  }
+  emailInput.setCustomValidity("");
+  phoneInput.setCustomValidity("");
+  phoneHint.classList.remove("phone-invalid");
+  phoneHint.textContent=result.reason==="previous_application_rejected"
+   ?"Your previous application was rejected. You may submit a new application using these same contact details."
+   :"No previous application was found with these contact details. You may continue.";
+  message.classList.add("hidden");
+  return true;
+ }catch(error){
+  showMessage(error instanceof Error?error.message:"We could not check your previous application. Please check your connection and try again.",true);
+  return false;
+ }
+}
 function goToStep(index){if(index<0||index>=paneEls.length)return;currentStep=index;paneEls.forEach((pane,i)=>{pane.hidden=i!==index;});[...stepper.children].forEach((item,i)=>{item.classList.toggle("active",i===index);item.classList.toggle("done",i<index);item.setAttribute("aria-current",i===index?"step":"false");});message.classList.add("hidden");if(index===5)renderReview();saveDraft();const top=form.getBoundingClientRect().top+window.scrollY-24;window.scrollTo({top:Math.max(0,top),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});}
 function valueOf(id){if(id==="phone"){const full=phoneIti?.getNumber?.();return full||(document.getElementById("phone")?.value.trim()||"Not provided");}const el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():"Not provided";}
 
@@ -526,8 +564,7 @@ form.addEventListener("submit",async event=>{
  if(!document.getElementById("privacy_ack").checked){showMessage("Please acknowledge the application privacy notice before submitting.",true);return;}
  if(!policyAccepted){openPolicy();showMessage("Please read and accept the Applicant Policy before submitting.",true);return;}
  const application=Object.fromEntries(new FormData(form).entries());
- if(!await checkEmailAvailability()){const reason=document.getElementById("email").validationMessage||"We could not verify this email address. Please try again.";goToStep(0);showMessage(reason,true);document.getElementById("email").reportValidity();document.getElementById("email").focus();return;}
- if(!await checkPhoneAvailability()){const reason=phoneInput.validationMessage||message.textContent||"We could not verify this phone number. Please try again.";goToStep(0);showMessage(reason,true);phoneInput.reportValidity();phoneInput.focus();return;}
+ if(!await checkReapplicationEligibility()){const reason=message.textContent||"Your previous application does not allow a new submission.";goToStep(0);showMessage(reason,true);document.getElementById("email").focus();return;}
  application.phone=phoneIti.getNumber();
  isSubmitting=true;submit.disabled=true;submit.textContent="Submitting application…";
  try{
