@@ -493,7 +493,7 @@ form.addEventListener("submit",async event=>{
   }
   const app=result.application;
   document.getElementById("application-id").textContent=app.reference_no;
-  document.getElementById("application-status").textContent="Your application has been received and its current status is Under Review. Visit /check/status to check updates. To link this application to your private dashboard, create an account using the same email address and verify it.";
+  document.getElementById("application-status").textContent="Your application has been received and its current status is Under Review. A confirmation email is being sent to your registered email address; please check your inbox and spam folder. Visit /check/status to check updates. To link this application to your private dashboard, create an account using the same email address and verify it.";
   try{localStorage.removeItem(DRAFT_KEY);}catch{}
   successModal.showModal();
  }catch(error){showMessage(error instanceof Error?error.message:"We could not submit your application right now. Please try again.",true);}
