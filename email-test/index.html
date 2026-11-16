@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123d2b">
+<meta name="robots" content="noindex,nofollow">
+<title>SMTP Email Test | Agrolyst SIWES</title>
+<link rel="icon" href="/agrolystfarmslogo.png">
+<style>
+:root{color-scheme:light;--green:#123d2b;--leaf:#28734a;--muted:#647469;--line:#dce7dc}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(145deg,#edf4e9,#f8faf6 55%,#e5efe3);font-family:Inter,Arial,sans-serif;color:#203b2b;display:grid;place-items:center;padding:24px}
+.wrap{width:min(100%,520px)}.card{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 22px 70px #123d2b18}
+.head{background:var(--green);padding:28px 26px;text-align:center;color:white}.head img{width:116px;height:auto;max-height:100px;object-fit:contain}.eyebrow{font-size:10px;letter-spacing:2px;font-weight:800;color:#d8e9a4;margin-top:12px}
+main{padding:30px}.tag{display:inline-block;background:#edf6eb;color:#28734a;border-radius:99px;padding:7px 11px;font-size:11px;font-weight:800;letter-spacing:.5px}
+h1{font-size:27px;line-height:1.2;margin:16px 0 10px;color:var(--green)}p{line-height:1.65;color:var(--muted);font-size:14px}
+label{display:block;font-size:13px;font-weight:700;margin:24px 0 8px}
+input{width:100%;height:50px;border:1px solid #cbd9cb;border-radius:10px;padding:0 14px;font-size:15px;outline:none}input:focus{border-color:#28734a;box-shadow:0 0 0 3px #28734a1b}
+button{width:100%;height:50px;border:0;border-radius:10px;background:var(--leaf);color:white;font-weight:800;font-size:14px;margin-top:14px;cursor:pointer}button:disabled{opacity:.65;cursor:wait}
+.note{background:#f6f8f4;border:1px solid #e5ece2;border-radius:10px;padding:13px 14px;margin-top:20px;font-size:12px;line-height:1.6;color:#647469}
+#status{display:none;margin-top:16px;padding:13px;border-radius:10px;font-size:13px;line-height:1.5}#status.ok{display:block;background:#edf8ef;color:#20613a;border:1px solid #cfe8d4}#status.err{display:block;background:#fff3f0;color:#9a3529;border:1px solid #f0d3cc}
+footer{text-align:center;color:#829087;font-size:11px;padding:18px}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+<header class="head"><img src="https://agrolystfarms.com/Agrolyst%20Logo.jpeg" alt="Agrolyst Farms"><div class="eyebrow">SIWES ADMINISTRATION</div></header>
+<main>
+<span class="tag">SMTP DELIVERY CHECK</span>
+<h1>Send a real test email</h1>
+<p>Send a branded message through the Hostinger SMTP settings connected to the Agrolyst SIWES Supabase project.</p>
+<form id="testForm">
+<label for="email">Approved test inbox</label>
+<input id="email" name="email" type="email" value="rokibyusuf7@gmail.com" readonly required autocomplete="email">
+<button id="sendBtn" type="submit">Send test email</button>
+</form>
+<div id="status" role="status" aria-live="polite"></div>
+<div class="note"><strong>Security notice:</strong> This temporary test page is restricted to the approved test inbox and limited to one message every 10 minutes. It does not create or modify applicant records and does not replace the automatic applicant notification system.</div>
+</main>
+</div><footer>Agrolyst Integrated Farms and Services · Internal testing page</footer></div>
+<script>
+const form=document.getElementById("testForm"),btn=document.getElementById("sendBtn"),statusBox=document.getElementById("status");
+form.addEventListener("submit",async event=>{
+ event.preventDefault();statusBox.className="";statusBox.style.display="block";statusBox.textContent="Sending your email securely…";btn.disabled=true;btn.textContent="Sending…";
+ try{
+  const response=await fetch("https://orhlccyodjuhwoaelmyd.supabase.co/functions/v1/siwes-email-test",{method:"POST",headers:{"Content-Type":"application/json","apikey":"sb_publishable_3HEzwj5aGJx3VOQD7l8jwQ_MngS3dcK"},body:JSON.stringify({email:document.getElementById("email").value})});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||"The email could not be sent.");
+  statusBox.className="ok";statusBox.textContent="Success! The SMTP server accepted the test email for "+result.recipient+". Please check the inbox and spam folder.";
+ }catch(error){statusBox.className="err";statusBox.textContent=error.message||"Unable to send the test email. Please try again later."}
+ finally{btn.disabled=false;btn.textContent="Send test email"}
+});
+</script>
+</body>
+</html>
