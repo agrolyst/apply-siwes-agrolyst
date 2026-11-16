@@ -243,7 +243,7 @@ let savedPhoneCountry="ng";
 try{policyAccepted=localStorage.getItem("agrolyst-siwes-policy-version")===POLICY_VERSION;}catch{}
 function showMessage(text,error=false){message.textContent=text;message.classList.remove("hidden","error");if(error)message.classList.add("error");}
 function getDraft(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||"{}")||{};}catch{return {};}}
-function saveDraft(){try{const values={};form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox"||["phone","emergency_contact_phone"].includes(el.name))return;values[el.name]=el.value;});const phoneCountry=phoneIti?.getSelectedCountryData()?.iso2||savedPhoneCountry||"ng";localStorage.setItem(DRAFT_KEY,JSON.stringify({values,phoneCountry,currentStep,savedAt:new Date().toISOString()}));}catch{}}
+function saveDraft(){try{const values={};form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox"||el.type==="file"||["phone","emergency_contact_phone"].includes(el.name))return;values[el.name]=el.value;});const phoneCountry=phoneIti?.getSelectedCountryData()?.iso2||savedPhoneCountry||"ng";localStorage.setItem(DRAFT_KEY,JSON.stringify({values,phoneCountry,currentStep,savedAt:new Date().toISOString()}));}catch{}}
 function readDraft(){const draft=getDraft();if(!draft.values)return;savedPhoneCountry=draft.phoneCountry||"ng";if(phoneIti){try{phoneIti.setCountry(savedPhoneCountry);}catch{}}form.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{if(el.type==="checkbox"||["phone","emergency_contact_phone"].includes(el.name))return;if(Object.prototype.hasOwnProperty.call(draft.values,el.name))el.value=draft.values[el.name];});const phone=document.getElementById("phone");if(phone)phone.value="";if(Number.isInteger(draft.currentStep))currentStep=Math.max(0,Math.min(4,draft.currentStep));}
 async function loadInstitutionSuggestions(){
  const input=document.getElementById("institution");
@@ -399,6 +399,42 @@ async function checkPhoneAvailability(){
 
 function goToStep(index){if(index<0||index>=paneEls.length)return;currentStep=index;paneEls.forEach((pane,i)=>{pane.hidden=i!==index;});[...stepper.children].forEach((item,i)=>{item.classList.toggle("active",i===index);item.classList.toggle("done",i<index);item.setAttribute("aria-current",i===index?"step":"false");});message.classList.add("hidden");if(index===4)renderReview();saveDraft();const top=form.getBoundingClientRect().top+window.scrollY-24;window.scrollTo({top:Math.max(0,top),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});}
 function valueOf(id){if(id==="phone"){const full=phoneIti?.getNumber?.();return full||(document.getElementById("phone")?.value.trim()||"Not provided");}const el=document.getElementById(id);return el&&el.value.trim()?el.value.trim():"Not provided";}
+
+let pendingDocumentUploads=[];
+let activeApplicationReference="";
+function selectedApplicantDocuments(){
+ const fields=[
+  ["school_introduction_letter","school_introduction_letter"],
+  ["student_id","student_id"],
+  ["cv_document","cv"],
+  ["passport_photo","passport_photo"]
+ ];
+ return fields.map(([id,type])=>({document_type:type,file:document.getElementById(id)?.files?.[0]})).filter(item=>item.file);
+}
+async function uploadApplicantDocuments(reference,emailAddress,documents){
+ const failed=[];
+ let uploaded=0;
+ for(const item of documents){
+  const file=item.file;
+  try{
+   const metadata={reference_no:reference,email:emailAddress,document_type:item.document_type,original_filename:file.name,mime_type:file.type,file_size_bytes:file.size};
+   const prepareResponse=await fetch(PUBLIC_UPLOAD_FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":PUBLIC_API_KEY},body:JSON.stringify({...metadata,action:"prepare"})});
+   const prepared=await prepareResponse.json().catch(()=>({}));
+   if(!prepareResponse.ok||!prepared.ok||!prepared.signed_url||!prepared.path)throw new Error(prepared.error||"Could not prepare "+file.name+".");
+   const storageResponse=await fetch(prepared.signed_url,{method:"PUT",headers:{"Content-Type":file.type,"apikey":PUBLIC_API_KEY},body:file});
+   if(!storageResponse.ok)throw new Error("Storage upload failed for "+file.name+". Please try again.");
+   const completeResponse=await fetch(PUBLIC_UPLOAD_FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":PUBLIC_API_KEY},body:JSON.stringify({...metadata,path:prepared.path,action:"complete"})});
+   const completed=await completeResponse.json().catch(()=>({}));
+   if(!completeResponse.ok||!completed.ok)throw new Error(completed.error||"Could not attach "+file.name+" to your application.");
+   uploaded++;
+  }catch(error){
+   console.error("Applicant document upload failed:",error);
+   failed.push(item);
+  }
+ }
+ pendingDocumentUploads=failed;
+ return {uploaded,failed:failed.length};
+}
 function renderReview(){const target=document.getElementById("review-summary");target.innerHTML="";const cards=[
  {title:"Personal information",step:0,fields:[["Full name","full_name"],["Email address","email"],["Phone","phone"]]},
  {title:"Academic background",step:1,fields:[["Institution","institution"],["Department","department"],["Course of study","course_of_study"],["Current level","study_level"]]},
@@ -463,6 +499,17 @@ email.addEventListener("focus",()=>{if(!emailPrompted){emailPrompted=true;emailM
 document.getElementById("edit-email").addEventListener("click",()=>{emailModal.close();email.focus();});
 document.getElementById("confirm-email-modal").addEventListener("click",()=>emailModal.close());
 document.getElementById("close-success").addEventListener("click",()=>successModal.close());
+document.getElementById("retry-documents").addEventListener("click",async()=>{
+ const button=document.getElementById("retry-documents");
+ if(!pendingDocumentUploads.length||!activeApplicationReference)return;
+ button.disabled=true;button.textContent="Uploading…";
+ const result=await uploadApplicantDocuments(activeApplicationReference,document.getElementById("email").value.trim().toLowerCase(),pendingDocumentUploads);
+ const status=document.getElementById("application-status");
+ status.textContent=result.failed
+  ? result.uploaded+" additional document(s) uploaded. "+result.failed+" file(s) still need attention. Please retry before leaving this page."
+  : "All supporting documents have now been uploaded and queued for AI review. A confirmation email is being sent to your registered email address. Check your inbox and spam folder.";
+ button.hidden=result.failed===0;button.disabled=false;button.textContent=result.failed?"Retry "+result.failed+" failed upload(s)":"Retry document uploads";
+});
 document.getElementById("copy-id").addEventListener("click",async()=>{const id=document.getElementById("application-id").textContent;try{await navigator.clipboard.writeText(id);document.getElementById("copy-id").textContent="Copied";}catch{showMessage("Please copy your Application ID manually: "+id,true);}});
 document.getElementById("register-another").addEventListener("click",()=>{try{localStorage.removeItem(DRAFT_KEY);}catch{}window.location.href="/";});
 form.addEventListener("submit",async event=>{
@@ -492,8 +539,15 @@ form.addEventListener("submit",async event=>{
    throw new Error(result.error||"We could not confirm the submission. Please try again.");
   }
   const app=result.application;
+  activeApplicationReference=app.reference_no;
+  pendingDocumentUploads=selectedApplicantDocuments();
+  const applicantEmail=document.getElementById("email").value.trim().toLowerCase();
+  const uploadResult=await uploadApplicantDocuments(app.reference_no,applicantEmail,pendingDocumentUploads);
   document.getElementById("application-id").textContent=app.reference_no;
-  document.getElementById("application-status").textContent="Your application has been received and its current status is Under Review. A confirmation email is being sent to your registered email address; please check your inbox and spam folder. Visit /check/status to check updates. To link this application to your private dashboard, create an account using the same email address and verify it.";
+  document.getElementById("application-status").textContent="Your application has been received and its current status is Under Review. "+uploadResult.uploaded+" supporting document(s) uploaded and sent for AI review. "+(uploadResult.failed?"Some files could not be uploaded. Use Retry document uploads below before leaving this page. ":"")+"A confirmation email is being sent to your registered email address; please check your inbox and spam folder. Visit /check/status to check updates.";
+  const retryButton=document.getElementById("retry-documents");
+  retryButton.hidden=uploadResult.failed===0;
+  retryButton.textContent=uploadResult.failed?"Retry "+uploadResult.failed+" failed upload(s)":"Retry document uploads";
   try{localStorage.removeItem(DRAFT_KEY);}catch{}
   successModal.showModal();
  }catch(error){showMessage(error instanceof Error?error.message:"We could not submit your application right now. Please try again.",true);}
