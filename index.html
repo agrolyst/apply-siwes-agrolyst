@@ -543,7 +543,10 @@ document.getElementById("email").addEventListener("input",()=>{document.getEleme
 form.addEventListener("input",event=>{if(event.target?.name)saveDraft();});
 form.addEventListener("change",event=>{if(event.target?.name)saveDraft();});
 document.getElementById("institution").addEventListener("input",()=>{saveDraft();});
-function showEmailGuidance(){if(emailPrompted||emailModal.open)return;emailPrompted=true;emailModal.showModal();}\nemail.addEventListener("pointerenter",showEmailGuidance);\nemail.addEventListener("click",showEmailGuidance);\nemail.addEventListener("focus",showEmailGuidance);
+function showEmailGuidance(){if(emailPrompted||emailModal.open)return;emailPrompted=true;emailModal.showModal();}
+email.addEventListener("pointerenter",showEmailGuidance);
+email.addEventListener("click",showEmailGuidance);
+email.addEventListener("focus",showEmailGuidance);
 document.getElementById("edit-email").addEventListener("click",()=>{emailModal.close();email.focus();});
 document.getElementById("confirm-email-modal").addEventListener("click",()=>emailModal.close());
 // The email guidance dialog is modal: applicants must acknowledge the instructions before they can continue typing in the form.
