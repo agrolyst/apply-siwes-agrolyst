@@ -185,12 +185,30 @@ footer{background:#123626;color:#e8f0e9;padding:21px 0}.footer-inner{display:fle
 @media(max-width:390px){.welcome-mark{display:none}.welcome h1{font-size:27px}.stepper-title{font-size:8px}.application-heading h2{font-size:21px}.secure-label{white-space:normal}}
 
 
-/* Keep the policy acknowledgement controls visible on short screens. */
-.policy-dialog{display:flex;flex-direction:column;max-height:92vh;max-height:92dvh;overflow:hidden}
+/* Applicant policy: keep it in the viewport as a true modal, never in document flow. */
+dialog.policy-dialog[open]{
+ position:fixed!important;
+ inset:0!important;
+ margin:auto!important;
+ width:min(600px,calc(100vw - 28px))!important;
+ max-width:600px;
+ max-height:92vh;
+ max-height:92dvh;
+ height:auto;
+ display:flex;
+ flex-direction:column;
+ overflow:hidden;
+ z-index:10000;
+ padding:0;
+ border:0;
+ border-radius:16px;
+ box-shadow:0 24px 80px rgba(10,35,20,.34);
+}
+dialog.policy-dialog::backdrop{background:rgba(10,25,16,.68);backdrop-filter:blur(3px)}
 .policy-dialog .policy-head,.policy-dialog .policy-bottom{flex:0 0 auto}
-.policy-dialog .policy-reader{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto}
+.policy-dialog .policy-reader{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain}
 @media(max-height:700px){
- .policy-dialog{max-height:94vh;max-height:94dvh}
+ dialog.policy-dialog[open]{max-height:94vh;max-height:94dvh}
  .policy-head{padding-top:18px;padding-bottom:15px}
  .policy-head h2{margin-top:8px;margin-bottom:6px}
  .policy-reader{padding-top:16px;padding-bottom:10px}
