@@ -228,11 +228,12 @@ function renderDocuments(app){
   }
   list.append(row);
  });
- detailsButton.hidden=app.status!=="changes_requested";
- if(app.status==="changes_requested"){
-  detailsButton.href="https://siwes.agrolystfarms.com/login/";
-  detailsButton.textContent="Fix application details →";
-  detailsButton.setAttribute("aria-label","Sign in to correct application details");
+ const missingReason=!String(app.reason_for_applying||"").trim();
+ detailsButton.hidden=app.status!=="changes_requested"&&!missingReason;
+ if(app.status==="changes_requested"||missingReason){
+  detailsButton.href="https://siwes.agrolystfarms.com/dashboard/";
+  detailsButton.textContent=missingReason?"Complete missing application details →":"Fix application details →";
+  detailsButton.setAttribute("aria-label","Sign in to correct your SIWES application details");
  }
  if(hasDocumentCorrection){
   const hint=document.createElement("p");hint.className="documents-intro";
@@ -279,6 +280,13 @@ guidanceText.style.margin="7px 0 0";
 guidanceText.textContent=reviewNotes||baseGuidance;
 guidance.append(guidanceTitle,guidanceText);
 if(reviewNotes&&app.status!=="changes_requested"&&app.status!=="rejected")guidanceText.textContent=baseGuidance+" "+reviewNotes;
+const reasonTitle=document.createElement("strong");
+reasonTitle.style.display="block";reasonTitle.style.marginTop="12px";
+reasonTitle.textContent="Why you chose Agrolyst for your SIWES training";
+const reasonText=document.createElement("p");reasonText.style.margin="5px 0 0";
+const savedReason=String(app.reason_for_applying||"").trim();
+reasonText.textContent=savedReason||"This answer has not been provided yet. It is required to complete your application. Sign in and add a short explanation of what you hope to learn and how the training relates to your course of study.";
+guidance.append(reasonTitle,reasonText);
 const letterIssued=app.status==="acceptance_letter_issued";printButton.hidden=!letterIssued;checkAgainButton.hidden=letterIssued;if(registerAnotherButton)registerAnotherButton.hidden=letterIssued;result.classList.toggle("letter-issued",letterIssued);result.hidden=false;showMessage("Application record found. Here is the latest status available.",false);result.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});}catch(error){showMessage(error instanceof Error?error.message:"We could not check the status right now. Please try again.",true);}finally{button.disabled=false;button.innerHTML='Check status <span aria-hidden="true">→</span>'; }});
 async function printAcceptanceLetter(){
  if(printInProgress)return;
