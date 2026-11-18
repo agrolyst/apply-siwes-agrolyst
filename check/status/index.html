@@ -111,6 +111,18 @@ footer p{margin:4px 0 0;color:#b8cabe}
 /* When a letter is issued, the status action area offers only the print action. */
 .result.letter-issued .result-actions{justify-content:flex-start}
 .result.letter-issued .result-actions #print-letter-button{display:inline-flex;min-width:220px}
+
+/* Unified Agrolyst identity: bold branded heading, official logo, restrained watermark */
+body{font-family:"Times New Roman",Times,serif;background:radial-gradient(ellipse at 8% 12%,#e6efe0 0,transparent 26rem),radial-gradient(ellipse at 96% 89%,#e6eee1 0,transparent 28rem),#f4f7f0}
+.brand img{width:82px;height:60px;object-fit:contain}
+.brand{font-family:"Times New Roman",Times,serif;font-size:16px;letter-spacing:.8px}
+.hero{background:linear-gradient(120deg,#0b2d1e,#145333 58%,#237348);padding:62px 0 88px}
+.hero h1{font-family:"Times New Roman",Times,serif;font-size:clamp(36px,5.3vw,56px);letter-spacing:-.8px;font-weight:700}
+.hero:before{content:"AGROLYST";position:absolute;right:3%;bottom:-25px;font:700 clamp(55px,11vw,130px) "Times New Roman",serif;letter-spacing:8px;color:#ffffff0b;pointer-events:none}
+.card{border-radius:17px;box-shadow:0 18px 50px #123d2b12}
+h2,.side h3{font-family:"Times New Roman",Times,serif}
+@media(max-width:540px){.brand img{width:65px;height:50px}.hero{padding:45px 0 67px}}
+
 </style>
 </head>
 <body>
