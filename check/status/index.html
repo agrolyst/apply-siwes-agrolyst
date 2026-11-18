@@ -231,9 +231,9 @@ function renderDocuments(app){
  const missingReason=!String(app.reason_for_applying||"").trim();
  detailsButton.hidden=app.status!=="changes_requested"&&!missingReason;
  if(app.status==="changes_requested"||missingReason){
-  detailsButton.href="https://siwes.agrolystfarms.com/dashboard/";
+  detailsButton.href="/check/status/fix/?id="+reference;
   detailsButton.textContent=missingReason?"Complete missing application details →":"Fix application details →";
-  detailsButton.setAttribute("aria-label","Sign in to correct your SIWES application details");
+  detailsButton.setAttribute("aria-label","Verify your email and correct your SIWES application details");
  }
  if(hasDocumentCorrection){
   const hint=document.createElement("p");hint.className="documents-intro";
